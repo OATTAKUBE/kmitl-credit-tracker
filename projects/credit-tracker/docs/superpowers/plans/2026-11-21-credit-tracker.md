@@ -1,131 +1,179 @@
-# Credit Tracker Implementation Plan
+# Credit Tracker (React + TypeScript - MVC Architecture) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a browser-based static web app that parses a KMITL CS student's unofficial transcript PDF, matches completed and in-progress courses against the CS B.Sc. 2564 curriculum (135 credits), and displays visual category progress, missing requirements, and graduation forecasts.
+**Goal:** Build a browser-based static web app in React 19 + TypeScript + Vite following the **Model-View-Controller (MVC)** architectural pattern to parse a KMITL CS student's unofficial transcript PDF, audit completed and in-progress courses against the CS B.Sc. 2564 curriculum (135 credits), and display category progress, missing requirements, and graduation forecasts.
 
-**Architecture:** Vanilla HTML5, modern CSS3 (custom properties, dark academic theme), and ES6 modules. PDF parsing is handled client-side using PDF.js CDN extracting plain text lines matched by regex against known KMITL registrar patterns. Domain logic is decoupled into a static curriculum definitions module, a parser module, and a credit calculator/audit engine module, all fully testable under Node.js test scripts before binding to DOM and `localStorage`.
+**Architecture:** Strict Model-View-Controller (MVC) separation on client-side React 19 + TypeScript 5:
+- **Model (`src/models/`):** Pure TypeScript domain logic, curriculum specifications, transcript parsing regexes, credit calculation engine, and storage adapters. Free from React dependencies; 100% unit-tested with Vitest.
+- **View (`src/views/`):** Pure presentational React components using Tailwind CSS v4 and Lucide icons. Views receive data and event handlers via props only, without performing direct business calculations or side effects.
+- **Controller (`src/controllers/`):** React controller hooks (e.g. `useCreditTrackerController`) and orchestrators that manage application state, coordinate Model calls (parsing, auditing, persistence), and supply data and callback handlers to Views.
 
-**Tech Stack:** HTML5, CSS3, ES6 JavaScript, Bootstrap Icons CDN, PDF.js CDN (v4.x), Node.js for CLI test verification.
+**Tech Stack:** React 19, TypeScript 5, Vite, Tailwind CSS v4, Lucide React, pdfjs-dist, Vitest.
 
 **Spec:** `c:\Users\oatxx\kmitl\Tracnscript\projects\credit-tracker\docs\superpowers\specs\2026-11-21-credit-tracker-design.md`
 
+## MVC Directory Structure
+
+```
+projects/credit-tracker/src/
+├── models/                         # [M] Pure domain logic, types & data
+│   ├── types.ts                    # Domain interfaces & types
+│   ├── curriculum.ts               # CS KMITL 2564 curriculum catalog, categories & rules
+│   ├── parser.ts                   # KMITL transcript text parser & title normalizer
+│   ├── calculator.ts               # Credit audit & graduation eligibility engine
+│   └── storage.ts                  # LocalStorage data persistence adapter
+│
+├── views/                          # [V] Pure presentation components (Props-driven)
+│   ├── UploadView.tsx              # Drag & drop upload area + demo button
+│   ├── StudentSummaryView.tsx      # Student details, GPA badge & progress ring
+│   ├── PathSelectorView.tsx        # Toggle between Special Problem & Cooperative Ed
+│   ├── CategoryCardView.tsx        # Single category progress card
+│   ├── CategoryGridView.tsx        # Responsive grid of category cards
+│   ├── MissingCoursesView.tsx      # List of missing mandatory courses
+│   ├── InProgressView.tsx          # List of courses currently enrolled
+│   └── GraduationBannerView.tsx    # Graduation eligibility status banner
+│
+├── controllers/                    # [C] Application controllers & hooks
+│   ├── useCreditTrackerController.ts # Coordinates Model logic, state & view actions
+│   └── pdfExtractor.ts             # pdfjs-dist wrapper to extract text from PDF
+│
+├── App.tsx                         # Root layout composing Views with Controller
+├── main.tsx                        # Entry point
+└── index.css                       # Tailwind CSS v4 styles & theme
+```
+
 ## Global Constraints
 
-- Standalone static web application — runs entirely client-side without any server or backend dependencies.
-- No external heavy frameworks (no React, Vue, or Angular) — pure vanilla ES6 JavaScript and standard CSS.
+- Standalone static web application — runs 100% client-side with no server or backend API dependencies.
+- Strict MVC architectural boundary: Views MUST NOT contain audit calculation algorithms; Models MUST NOT import React or DOM.
+- Modern React 19 + TypeScript 5 + Vite architecture with strict type safety (no `any` types for domain models).
+- Tailwind CSS v4 with dark academic theme (`#0b0f19` background, `#6366f1` indigo accent, `#10b981` emerald success, `#f59e0b` amber warning).
 - Strictly offline-capable once loaded; no student data or transcript text leaves the user's browser.
-- Use Bootstrap Icons CDN for all icons; no raw emoji in the UI.
+- Use Lucide React icons for all UI iconography; no raw emoji in the UI.
 - All curriculum course codes, categories, and credit rules must conform strictly to KMITL CS 2564 curriculum (`Job.pdf`).
 - Graceful handling of courses with blank or missing grades (flagged as "กำลังศึกษา / In-Progress").
 
 ## Review Focus
 
-- Transcript contains multi-line course titles (e.g. `DIGITAL INNOVATION AND TECHNOLOGY\nMANAGEMENT IN DISRUPTIVE ERA`) — ensure titles are concatenated properly so credits and grades are not mismatched.
-- Courses with no grade yet (e.g., in-progress semester) must not be counted towards earned graduation credits, but should be shown in an "กำลังศึกษา" section.
-- Course code aliases (e.g. `90641007` DIGITAL CITIZEN vs `90641002` ความฉลาดทางดิจิทัล) must resolve to the same curriculum item.
-- Alternative study path (การศึกษาทางเลือก): special problem 1 & 2 (3+3 = 6 credits) vs cooperative education (6 credits) must dynamically adapt target requirements based on user preference or auto-detection.
-- Corrupted or non-transcript PDF uploads must display clear, non-cryptic error feedback in Thai.
+- Transcript contains multi-line course titles (e.g. `DIGITAL INNOVATION AND TECHNOLOGY\nMANAGEMENT IN DISRUPTIVE ERA`) — ensure Model parser concatenates lines properly before matching credit and grade columns.
+- Courses with no grade yet (current semester) must not be counted towards earned graduation credits in Model calculator, but must be passed to `InProgressView`.
+- Course code aliases (e.g. `90641007` DIGITAL CITIZEN vs `90641002` ความฉลาดทางดิจิทัล) must resolve to the same curriculum item in Model calculator.
+- Alternative study path: switching between Special Problem (3+3 = 6 cr) and Cooperative Education (6 cr) via `PathSelectorView` must trigger Controller to recalculate Model audit results dynamically.
+- Corrupted or non-transcript PDF uploads must display clear, non-cryptic error feedback in Thai in `UploadView` without crashing the app.
 
 ---
 
-### Task 1: Authoritative Curriculum Data Module
+### Task 1: [Model] Project Scaffolding, TypeScript Domain Types & Curriculum Model
 
 **Files:**
-- Create: `projects/credit-tracker/assets/js/curriculum-data.js`
-- Test: `projects/credit-tracker/tests/test-curriculum.js`
+- Create: `projects/credit-tracker/package.json`
+- Create: `projects/credit-tracker/vite.config.ts`
+- Create: `projects/credit-tracker/tsconfig.json`
+- Create: `projects/credit-tracker/src/models/types.ts`
+- Create: `projects/credit-tracker/src/models/curriculum.ts`
+- Test: `projects/credit-tracker/src/models/curriculum.test.ts`
 
 **Interfaces:**
-- Produces:
-  - `CURRICULUM_STRUCTURE`: Object defining total credits (135), categories, targets, and course lists.
-  - `COURSE_CATALOG`: Map of course code -> `{ code, titleTH, titleEN, credits, category, yearSem, isMandatory }`.
-  - `CODE_ALIASES`: Map of alternative course codes -> canonical code.
-  - `ALTERNATIVE_PATHS`: Definitions of Path A (Special Problem 1 & 2) and Path B (Cooperative Education).
+- Produces `projects/credit-tracker/src/models/types.ts`:
+  - `CourseEntry`: `{ code: string; title: string; credits: number; grade: string; semester: string; isCompleted: boolean; }`
+  - `CurriculumCourse`: `{ code: string; titleTH: string; titleEN: string; credits: number; category: CategoryId; yearSem?: string; isMandatory: boolean; }`
+  - `CategoryId`: `'ge_foundation' | 'ge_lang' | 'ge_elective' | 'math_mandatory' | 'cs_mandatory' | 'cs_elective' | 'alternative_study' | 'free_elective'`
+  - `AlternativePath`: `'special_problem' | 'coop'`
+  - `CategoryProgress`: `{ id: CategoryId; nameTH: string; requiredCredits: number; earnedCredits: number; inProgressCredits: number; courses: CourseEntry[]; isMet: boolean; }`
+  - `StudentInfo`: `{ name: string; studentId: string; degree: string; program: string; }`
+  - `AuditResult`: `{ studentInfo: StudentInfo; totalEarned: number; totalRequired: number; cumulativeGPA: number; isEligibleToGraduate: boolean; categories: Record<CategoryId, CategoryProgress>; missingMandatory: CurriculumCourse[]; inProgressCourses: CourseEntry[]; currentPath: AlternativePath; }`
+- Produces `projects/credit-tracker/src/models/curriculum.ts`:
+  - `CURRICULUM_REQUIREMENTS: Record<CategoryId, { nameTH: string; requiredCredits: number }>` (Total = 135)
+  - `MANDATORY_COURSES: CurriculumCourse[]` (Math 18 credits, CS 57 credits)
+  - `ALTERNATIVE_PATHS: Record<AlternativePath, { nameTH: string; credits: number; courses: CurriculumCourse[] }>`
+  - `CODE_ALIASES: Record<string, string>`
 
-- [ ] **Step 1: Write the test verifying curriculum data integrity**
+- [ ] **Step 1: Initialize Vite React-TS project and Vitest configuration**
 
-```javascript
-// projects/credit-tracker/tests/test-curriculum.js
-const assert = require('assert');
-const { CURRICULUM_STRUCTURE, COURSE_CATALOG, CODE_ALIASES } = require('../assets/js/curriculum-data.js');
+Create `package.json` in `projects/credit-tracker/` with React 19, TypeScript, Tailwind CSS v4, Lucide React, pdfjs-dist, and Vitest.
+Run `npm install` inside `projects/credit-tracker/`.
 
-// Verify total credits
-assert.strictEqual(CURRICULUM_STRUCTURE.totalCredits, 135, 'Total curriculum credits must be 135');
+- [ ] **Step 2: Write failing test for curriculum data catalog integrity**
 
-// Verify mandatory Math (18 credits)
-const mathCourses = Object.values(COURSE_CATALOG).filter(c => c.category === 'math_mandatory');
-const mathCredits = mathCourses.reduce((sum, c) => sum + c.credits, 0);
-assert.strictEqual(mathCredits, 18, 'Math mandatory courses must total 18 credits');
+Create `projects/credit-tracker/src/models/curriculum.test.ts`:
+```typescript
+import { describe, it, expect } from 'vitest';
+import { CURRICULUM_REQUIREMENTS, MANDATORY_COURSES, ALTERNATIVE_PATHS, CODE_ALIASES } from './curriculum';
 
-// Verify mandatory CS (57 credits)
-const csMandatory = Object.values(COURSE_CATALOG).filter(c => c.category === 'cs_mandatory');
-const csCredits = csMandatory.reduce((sum, c) => sum + c.credits, 0);
-assert.strictEqual(csCredits, 57, 'CS mandatory courses must total 57 credits');
+describe('Curriculum Model Integrity', () => {
+  it('should have total required credits equal to 135', () => {
+    const total = Object.values(CURRICULUM_REQUIREMENTS).reduce((sum, c) => sum + c.requiredCredits, 0);
+    expect(total).toBe(135);
+  });
 
-// Verify code alias mapping exists
-assert.strictEqual(CODE_ALIASES['90641007'], '90641002', 'Digital Citizen alias must map to canonical code');
+  it('should have 18 credits for math mandatory and 57 credits for cs mandatory', () => {
+    const math = MANDATORY_COURSES.filter(c => c.category === 'math_mandatory');
+    const cs = MANDATORY_COURSES.filter(c => c.category === 'cs_mandatory');
+    expect(math.reduce((s, c) => s + c.credits, 0)).toBe(18);
+    expect(cs.reduce((s, c) => s + c.credits, 0)).toBe(57);
+  });
 
-console.log('✓ Curriculum data test passed!');
+  it('should define alternative paths correctly', () => {
+    expect(ALTERNATIVE_PATHS.special_problem.credits).toBe(6);
+    expect(ALTERNATIVE_PATHS.coop.credits).toBe(6);
+    expect(ALTERNATIVE_PATHS.special_problem.courses.length).toBe(2);
+    expect(ALTERNATIVE_PATHS.coop.courses.length).toBe(1);
+  });
+
+  it('should map alias 90641007 to canonical 90641002', () => {
+    expect(CODE_ALIASES['90641007']).toBe('90641002');
+  });
+});
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 3: Run test to verify it fails**
 
-Run: `node projects/credit-tracker/tests/test-curriculum.js`
-Expected: FAIL with `Cannot find module '../assets/js/curriculum-data.js'`
+Run: `cd projects/credit-tracker && npx vitest run src/models/curriculum.test.ts`
+Expected: FAIL with missing module error.
 
-- [ ] **Step 3: Implement `projects/credit-tracker/assets/js/curriculum-data.js`**
+- [ ] **Step 4: Implement `src/models/types.ts` and `src/models/curriculum.ts`**
 
-Implement complete dictionary of all courses from `Job.pdf`, categorizing:
-- `ge_foundation` (6 credits)
-- `ge_language` (9 credits)
-- `ge_elective` (15 credits)
-- `math_mandatory` (18 credits)
-- `cs_mandatory` (57 credits)
-- `cs_elective` (18 credits)
-- `alternative_study` (6 credits: Special Problem vs Coop)
-- `free_elective` (6 credits)
-Support both CommonJS (`module.exports`) and ES Module (`export`) compatibility.
+Define all types and curriculum constants strictly matching CS KMITL 2564:
+- Math mandatory (6 courses): 05506232, 05506231, 05506233, 05506001, 05506250, 05506002.
+- CS mandatory (21 courses): 05506003, 05506004, 05506005, 05506006, 05506007, 05506008, 05506011, 05506012, 05506013, 05506014, 05506015, 05506016, 05506017, 05506113, 05506210, 05506234, 05506235, 05506236, 05506237, 05506238, 05506239.
+- GE categories and Alternative paths.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 5: Run test to verify it passes**
 
-Run: `node projects/credit-tracker/tests/test-curriculum.js`
-Expected: Output `✓ Curriculum data test passed!`
+Run: `cd projects/credit-tracker && npx vitest run src/models/curriculum.test.ts`
+Expected: PASS (4 tests passing).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add projects/credit-tracker/assets/js/curriculum-data.js projects/credit-tracker/tests/test-curriculum.js
-git commit -m "feat: add curriculum data definitions and validation test"
+git add projects/credit-tracker/package.json projects/credit-tracker/vite.config.ts projects/credit-tracker/tsconfig.json projects/credit-tracker/src/models/types.ts projects/credit-tracker/src/models/curriculum.ts projects/credit-tracker/src/models/curriculum.test.ts
+git commit -m "feat(model): scaffold Vite React-TS project, domain types, and curriculum model"
 ```
 
 ---
 
-### Task 2: KMITL Transcript Text Parser
+### Task 2: [Model] KMITL Transcript Text Parser Model
 
 **Files:**
-- Create: `projects/credit-tracker/assets/js/parser.js`
-- Test: `projects/credit-tracker/tests/test-parser.js`
+- Create: `projects/credit-tracker/src/models/parser.ts`
+- Test: `projects/credit-tracker/src/models/parser.test.ts`
 
 **Interfaces:**
-- Consumes: Raw text extracted from KMITL transcript PDF.
-- Produces: `parseTranscriptText(rawText: string) -> TranscriptResult`
-  Where `TranscriptResult` contains:
-  - `studentInfo: { name: string, studentId: string, degree: string, program: string }`
-  - `semesters: Array<{ name: string, courses: Array<CourseEntry>, gps: number, gpa: number }>`
-  - `allCourses: Array<CourseEntry>`
-  - `summary: { totalCreditsEarned: number, cumulativeGPA: number }`
-  `CourseEntry`: `{ code: string, title: string, credits: number, grade: string, isCompleted: boolean }`
+- Consumes: Raw text string extracted from transcript PDF.
+- Produces `parseTranscriptText(rawText: string): ParsedTranscript`:
+  - `studentInfo: StudentInfo` (`name`, `studentId`, `degree`, `program`)
+  - `allCourses: CourseEntry[]`
+  - `summary: { totalCreditsEarned: number; cumulativeGPA: number; }`
 
-- [ ] **Step 1: Write test for transcript parsing using extracted sample text**
+- [ ] **Step 1: Write failing test with realistic sample transcript text**
 
-```javascript
-// projects/credit-tracker/tests/test-parser.js
-const assert = require('assert');
-const fs = require('fs');
-const { parseTranscriptText } = require('../assets/js/parser.js');
+Create `projects/credit-tracker/src/models/parser.test.ts`:
+```typescript
+import { describe, it, expect } from 'vitest';
+import { parseTranscriptText } from './parser';
 
-// Load sample extracted text from actual transcript.pdf
-const sampleRaw = `
+const SAMPLE_TRANSCRIPT = `
 Name Mr. Teerasak Khlaiphet Student ID 67050252
 Degree Bachelor of Science Date of Graduation N/A
 Program Computer Science
@@ -140,259 +188,381 @@ GPS : 2.90 GPA : 2.90
 05506210 ARTIFICIAL INTELLIGENCE 3 B+
 05506235 DIGITAL INNOVATION AND TECHNOLOGY 3
 MANAGEMENT IN DISRUPTIVE ERA
+90644010 DEVELOPMENT OF READING AND WRITING 3
+SKILLS IN ENGLISH
 Total number of credit earned: 85
 Cumulative GPA: 3.03
 `;
 
-const res = parseTranscriptText(sampleRaw);
+describe('Transcript Parser Model', () => {
+  it('should parse student metadata correctly', () => {
+    const result = parseTranscriptText(SAMPLE_TRANSCRIPT);
+    expect(result.studentInfo.studentId).toBe('67050252');
+    expect(result.studentInfo.name).toBe('Mr. Teerasak Khlaiphet');
+    expect(result.studentInfo.program).toBe('Computer Science');
+    expect(result.summary.totalCreditsEarned).toBe(85);
+    expect(result.summary.cumulativeGPA).toBe(3.03);
+  });
 
-assert.strictEqual(res.studentInfo.studentId, '67050252');
-assert.strictEqual(res.studentInfo.name, 'Mr. Teerasak Khlaiphet');
-assert.strictEqual(res.summary.totalCreditsEarned, 85);
-assert.strictEqual(res.summary.cumulativeGPA, 3.03);
+  it('should concatenate multi-line course titles correctly', () => {
+    const result = parseTranscriptText(SAMPLE_TRANSCRIPT);
+    const multiLine = result.allCourses.find(c => c.code === '05506235');
+    expect(multiLine).toBeDefined();
+    expect(multiLine?.title).toContain('MANAGEMENT IN DISRUPTIVE ERA');
+    expect(multiLine?.credits).toBe(3);
+    expect(multiLine?.grade).toBe('');
+    expect(multiLine?.isCompleted).toBe(false);
+  });
 
-// Verify multi-line title concatenation
-const mgmtCourse = res.allCourses.find(c => c.code === '05506235');
-assert(mgmtCourse, 'Should parse multi-line course 05506235');
-assert.strictEqual(mgmtCourse.grade, '', 'Should have blank grade for in-progress course');
-assert.strictEqual(mgmtCourse.isCompleted, false, 'In-progress course is not completed');
+  it('should distinguish completed courses from in-progress courses', () => {
+    const result = parseTranscriptText(SAMPLE_TRANSCRIPT);
+    const completed = result.allCourses.find(c => c.code === '05506003');
+    expect(completed?.isCompleted).toBe(true);
+    expect(completed?.grade).toBe('C+');
 
-// Verify completed course
-const progCourse = res.allCourses.find(c => c.code === '05506003');
-assert.strictEqual(progCourse.grade, 'C+');
-assert.strictEqual(progCourse.isCompleted, true);
-
-console.log('✓ Transcript parser test passed!');
+    const inProgress = result.allCourses.find(c => c.code === '05506014');
+    expect(inProgress?.isCompleted).toBe(false);
+    expect(inProgress?.grade).toBe('');
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `node projects/credit-tracker/tests/test-parser.js`
-Expected: FAIL with `Cannot find module '../assets/js/parser.js'`
+Run: `cd projects/credit-tracker && npx vitest run src/models/parser.test.ts`
+Expected: FAIL with `Cannot find module './parser'`.
 
-- [ ] **Step 3: Implement `projects/credit-tracker/assets/js/parser.js`**
+- [ ] **Step 3: Implement `src/models/parser.ts`**
 
-Implement regex parser that:
-1. Extracts student metadata header.
-2. Identifies semester headers (`1st Semester, Year, 2024-2025`).
-3. Handles multi-line course titles before credit/grade column.
-4. Distinguishes completed courses (grades A, B+, B, C+, C, D+, D, S) from in-progress courses (no grade or empty grade).
-5. Extracts final total credits earned and cumulative GPA.
+Implement pure `parseTranscriptText(rawText: string)`:
+1. Parse header fields (`Name`, `Student ID`, `Program`).
+2. Match semester headers (`\d+(?:st|nd|rd|th)\s+Semester[^\n]*`).
+3. Pre-process text lines to combine wrapped title lines.
+4. Parse course rows with regex: `^(\d{8})\s+(.+?)\s+(\d+)(?:\s+([A-Z][+-]?|S|F))?\s*$`
+   - If grade is present and in `['A','B+','B','C+','C','D+','D','S']`: `isCompleted = true`, `grade = match[4]`.
+   - If grade is absent: `isCompleted = false`, `grade = ''`.
+5. Parse footer: `Total number of credit earned:\s*(\d+)` and `Cumulative GPA:\s*([\d.]+)`.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `node projects/credit-tracker/tests/test-parser.js`
-Expected: Output `✓ Transcript parser test passed!`
+Run: `cd projects/credit-tracker && npx vitest run src/models/parser.test.ts`
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add projects/credit-tracker/assets/js/parser.js projects/credit-tracker/tests/test-parser.js
-git commit -m "feat: implement transcript text parser with multi-line title support"
+git add projects/credit-tracker/src/models/parser.ts projects/credit-tracker/src/models/parser.test.ts
+git commit -m "feat(model): implement transcript text parser with multi-line title and in-progress course handling"
 ```
 
 ---
 
-### Task 3: Credit Matching, Category Audit & Graduation Engine
+### Task 3: [Model] Credit Matching, Category Audit & Graduation Engine Model
 
 **Files:**
-- Create: `projects/credit-tracker/assets/js/calculator.js`
-- Test: `projects/credit-tracker/tests/test-calculator.js`
+- Create: `projects/credit-tracker/src/models/calculator.ts`
+- Test: `projects/credit-tracker/src/models/calculator.test.ts`
 
 **Interfaces:**
 - Consumes:
-  - `parsedCourses: Array<CourseEntry>`
-  - `curriculum: CURRICULUM_STRUCTURE`
-  - `selectedPath: 'special_problem' | 'coop' | 'auto'`
-- Produces: `auditGraduation(parsedCourses, selectedPath) -> AuditResult`
-  Where `AuditResult` contains:
-  - `totalEarnedCredits: number`
-  - `totalTargetCredits: number` (135)
-  - `overallPercentage: number`
-  - `inProgressCredits: number`
-  - `predictedTotalCredits: number`
-  - `categories: Map<CategoryId, CategoryProgress>`
-    `CategoryProgress`: `{ id, titleTH, earned, target, percentage, completedCourses, inProgressCourses, missingCourses }`
-  - `graduationStatus: { isEligible: boolean, remainingCredits: number, remainingMandatoryCount: number, path: string }`
+  - `studentInfo: StudentInfo`
+  - `courses: CourseEntry[]` from parser
+  - `selectedPath: AlternativePath` ('special_problem' | 'coop')
+  - `CURRICULUM_REQUIREMENTS`, `MANDATORY_COURSES`, `ALTERNATIVE_PATHS`, `CODE_ALIASES`
+- Produces: `auditGraduation(studentInfo: StudentInfo, courses: CourseEntry[], selectedPath: AlternativePath): AuditResult`
 
-- [ ] **Step 1: Write unit test for graduation audit calculation**
+- [ ] **Step 1: Write failing test using parsed course data**
 
-```javascript
-// projects/credit-tracker/tests/test-calculator.js
-const assert = require('assert');
-const { auditGraduation } = require('../assets/js/calculator.js');
-const fs = require('fs');
+Create `projects/credit-tracker/src/models/calculator.test.ts`:
+```typescript
+import { describe, it, expect } from 'vitest';
+import { auditGraduation } from './calculator';
+import { CourseEntry, StudentInfo } from './types';
 
-// Use the parsed transcript data from the real user's transcript
-const transcriptData = JSON.parse(fs.readFileSync('transcript_data.json', 'utf8'));
+const mockStudent: StudentInfo = {
+  name: 'Mr. Teerasak Khlaiphet',
+  studentId: '67050252',
+  degree: 'B.Sc.',
+  program: 'Computer Science'
+};
 
-// Convert to CourseEntry format
-const parsedCourses = transcriptData.map(c => ({
-  code: c.code,
-  title: c.title,
-  credits: c.credits,
-  grade: c.grade,
-  isCompleted: ['A','B+','B','C+','C','D+','D','S'].includes(c.grade)
-}));
+const mockCourses: CourseEntry[] = [
+  // Math mandatory (9 cr completed)
+  { code: '05506231', title: 'DISCRETE MATHEMATICS', credits: 3, grade: 'C', semester: '1/2024', isCompleted: true },
+  { code: '05506232', title: 'CALCULUS 1', credits: 3, grade: 'B+', semester: '1/2024', isCompleted: true },
+  { code: '05506001', title: 'LINEAR ALGEBRA', credits: 3, grade: 'C', semester: '2/2024', isCompleted: true },
+  // CS mandatory (6 cr completed, 3 cr in-progress)
+  { code: '05506003', title: 'PROGRAMMING FUNDAMENTALS', credits: 3, grade: 'C+', semester: '1/2024', isCompleted: true },
+  { code: '05506005', title: 'COMPUTER SCIENCE', credits: 3, grade: 'B', semester: '1/2024', isCompleted: true },
+  { code: '05506014', title: 'COMPUTER GRAPHICS', credits: 3, grade: '', semester: '1/2026', isCompleted: false },
+  // GE with alias
+  { code: '90641007', title: 'DIGITAL CITIZEN', credits: 3, grade: 'S', semester: '2/2024', isCompleted: true }
+];
 
-const result = auditGraduation(parsedCourses, 'special_problem');
+describe('Credit Audit Calculator Model', () => {
+  it('should categorize math and cs mandatory courses correctly', () => {
+    const audit = auditGraduation(mockStudent, mockCourses, 'special_problem');
+    expect(audit.categories.math_mandatory.earnedCredits).toBe(9);
+    expect(audit.categories.cs_mandatory.earnedCredits).toBe(6);
+    expect(audit.categories.cs_mandatory.inProgressCredits).toBe(3);
+  });
 
-assert.strictEqual(result.categories.math_mandatory.earned, 18, 'Math should be 18/18');
-assert.strictEqual(result.categories.math_mandatory.missingCourses.length, 0, 'Math should have 0 missing courses');
-assert(result.totalEarnedCredits >= 80, 'Total credits earned should be calculated');
-assert.strictEqual(result.graduationStatus.isEligible, false, 'Year 3 student should not yet be eligible to graduate');
-assert(result.graduationStatus.remainingCredits > 0, 'Should have remaining credits');
+  it('should resolve course aliases (90641007 -> 90641002 in GE Foundation)', () => {
+    const audit = auditGraduation(mockStudent, mockCourses, 'special_problem');
+    expect(audit.categories.ge_foundation.earnedCredits).toBe(3);
+  });
 
-console.log('✓ Calculator audit test passed!');
+  it('should list missing mandatory courses', () => {
+    const audit = auditGraduation(mockStudent, mockCourses, 'special_problem');
+    const missingCodes = audit.missingMandatory.map(c => c.code);
+    expect(missingCodes).toContain('05506233'); // Calculus 2
+    expect(missingCodes).toContain('05506239'); // Practical Project
+    expect(missingCodes).not.toContain('05506003'); // Completed
+  });
+
+  it('should accurately calculate total graduation eligibility', () => {
+    const audit = auditGraduation(mockStudent, mockCourses, 'special_problem');
+    expect(audit.isEligibleToGraduate).toBe(false);
+    expect(audit.totalEarned).toBe(18); // 9 + 6 + 3
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `node projects/credit-tracker/tests/test-calculator.js`
-Expected: FAIL with `Cannot find module '../assets/js/calculator.js'`
+Run: `cd projects/credit-tracker && npx vitest run src/models/calculator.test.ts`
+Expected: FAIL with `Cannot find module './calculator'`.
 
-- [ ] **Step 3: Implement `projects/credit-tracker/assets/js/calculator.js`**
+- [ ] **Step 3: Implement `src/models/calculator.ts`**
 
-Implement course categorizer:
-1. Lookup canonical code through `CODE_ALIASES`.
-2. Categorize into:
-   - `math_mandatory` (18 cr)
-   - `cs_mandatory` (57 cr)
-   - `ge_foundation` (6 cr)
-   - `ge_language` (9 cr)
-   - `ge_elective` (15 cr)
-   - `cs_elective` (18 cr)
-   - `alternative_study` (6 cr)
-   - `free_elective` (6 cr)
-3. Calculate missing mandatory courses per category.
-4. Calculate in-progress units.
-5. Provide graduation forecast (remaining credits, missing courses by semester).
+Implement pure domain logic `auditGraduation`:
+1. Normalize course codes using `CODE_ALIASES`.
+2. Filter completed courses (`isCompleted === true`) and in-progress courses (`isCompleted === false`).
+3. Categorize completed courses into 8 buckets:
+   - GE Foundation (90642999 & 90641002/90641007, up to 6 cr)
+   - GE Language (90644xxx, up to 9 cr)
+   - GE Electives (90642xxx, up to 15 cr)
+   - Math Mandatory (6 courses, 18 cr)
+   - CS Mandatory (21 courses, 57 cr)
+   - Alternative Study (Special Problem: 05506098+05506099 or Coop: 05506117, 6 cr)
+   - CS Elective (05506xxx not in mandatory, up to 18 cr)
+   - Free Elective (overflow and other courses, up to 6 cr)
+4. Compute missing mandatory courses.
+5. Determine graduation eligibility: `totalEarned >= 135 && missingMandatory.length === 0`.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `node projects/credit-tracker/tests/test-calculator.js`
-Expected: Output `✓ Calculator audit test passed!`
+Run: `cd projects/credit-tracker && npx vitest run src/models/calculator.test.ts`
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add projects/credit-tracker/assets/js/calculator.js projects/credit-tracker/tests/test-calculator.js
-git commit -m "feat: implement credit audit engine and graduation calculator"
+git add projects/credit-tracker/src/models/calculator.ts projects/credit-tracker/src/models/calculator.test.ts
+git commit -m "feat(model): implement credit audit engine with code aliases and graduation checks"
 ```
 
 ---
 
-### Task 4: UI Design, Layout & Responsive Styles
+### Task 4: [View] Pure Presentational UI Components (Tailwind CSS v4 & Lucide Icons)
 
 **Files:**
-- Create: `projects/credit-tracker/index.html`
-- Create: `projects/credit-tracker/assets/css/style.css`
+- Create: `projects/credit-tracker/src/views/UploadView.tsx`
+- Create: `projects/credit-tracker/src/views/StudentSummaryView.tsx`
+- Create: `projects/credit-tracker/src/views/PathSelectorView.tsx`
+- Create: `projects/credit-tracker/src/views/CategoryCardView.tsx`
+- Create: `projects/credit-tracker/src/views/CategoryGridView.tsx`
+- Create: `projects/credit-tracker/src/views/MissingCoursesView.tsx`
+- Create: `projects/credit-tracker/src/views/InProgressView.tsx`
+- Create: `projects/credit-tracker/src/views/GraduationBannerView.tsx`
+- Test: `projects/credit-tracker/src/views/CategoryCardView.test.tsx`
 
 **Interfaces:**
-- HTML DOM elements:
-  - `#drop-zone`: Drag-and-drop / file input area for PDF.
-  - `#load-sample-btn`: Quick button to load user's existing parsed transcript.
-  - `#student-info-card`: Displays student name, ID, GPA, and total credits.
-  - `#progress-ring`: Circular SVG progress indicator.
-  - `#category-grid`: Container for category progress cards.
-  - `#path-toggle`: Radio/Toggle for Path A (ปัญหาพิเศษ) vs Path B (สหกิจ).
-  - `#missing-courses-section`: Filterable checklist of missing mandatory & elective subjects.
-  - `#in-progress-section`: Badge list of courses currently being studied.
-  - `#graduation-banner`: Clear graduation readiness banner.
+- Views are stateless/props-driven components:
+  - `CategoryCardViewProps`: `{ category: CategoryProgress }`
+  - `StudentSummaryViewProps`: `{ studentInfo: StudentInfo; totalEarned: number; totalRequired: number; cumulativeGPA: number; }`
+  - `PathSelectorViewProps`: `{ currentPath: AlternativePath; onSelectPath: (path: AlternativePath) => void; }`
+  - `MissingCoursesViewProps`: `{ missing: CurriculumCourse[] }`
+  - `InProgressViewProps`: `{ courses: CourseEntry[] }`
+  - `UploadViewProps`: `{ onFileUpload: (file: File) => void; onDemoLoad: () => void; isProcessing: boolean; error: string | null; }`
+  - `GraduationBannerViewProps`: `{ isEligible: boolean; totalEarned: number; totalRequired: number; missingCount: number; }`
 
-- [ ] **Step 1: Create `projects/credit-tracker/index.html`**
+- [ ] **Step 1: Write component test for `CategoryCardView`**
 
-Write standard semantic HTML5 structure with Bootstrap Icons CDN, Google Fonts (Noto Sans Thai & JetBrains Mono), and container sections for upload, summary, circular progress, category breakdown, missing subjects, and graduation analysis.
+Create `projects/credit-tracker/src/views/CategoryCardView.test.tsx`:
+```typescript
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { CategoryCardView } from './CategoryCardView';
+import { CategoryProgress } from '../models/types';
 
-- [ ] **Step 2: Create `projects/credit-tracker/assets/css/style.css`**
+const mockCategory: CategoryProgress = {
+  id: 'math_mandatory',
+  nameTH: 'วิชาบังคับ คณิตศาสตร์/สถิติ',
+  requiredCredits: 18,
+  earnedCredits: 12,
+  inProgressCredits: 3,
+  courses: [],
+  isMet: false
+};
 
-Implement responsive dark theme styling:
-- Palette: Dark navy/slate background (`#0b0f19`, `#111827`), indigo primary (`#6366f1`), emerald success (`#10b981`), amber warning (`#f59e0b`), rose danger (`#ef4444`).
-- Circular SVG progress ring styling.
-- Responsive grid: 1 col on mobile, 2-3 cols on desktop.
-- Drag-and-drop hover and active state effects.
-- Clean typography and badge components.
+describe('CategoryCardView Component', () => {
+  it('should render category name and credit counts', () => {
+    render(<CategoryCardView category={mockCategory} />);
+    expect(screen.getByText('วิชาบังคับ คณิตศาสตร์/สถิติ')).toBeDefined();
+    expect(screen.getByText(/12 \/ 18/)).toBeDefined();
+  });
+});
+```
 
-- [ ] **Step 3: Verification**
+- [ ] **Step 2: Run test to verify it fails**
 
-Check HTML syntax and verify asset links.
+Run: `cd projects/credit-tracker && npx vitest run src/views/CategoryCardView.test.tsx`
+Expected: FAIL with `Cannot find module './CategoryCardView'`.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Implement presentational components in `src/views/`**
+
+1. `UploadView.tsx`: Drag-and-drop zone with UploadCloud icon, demo button, processing spinner, and Thai error alert.
+2. `StudentSummaryView.tsx`: Student metadata cards, GPA pill, and animated SVG circular credit progress ring.
+3. `PathSelectorView.tsx`: Toggle buttons for Special Problem vs Cooperative Education with visual active state.
+4. `CategoryCardView.tsx`: Progress bar with earned vs required credits, in-progress indicator, and completion badge.
+5. `CategoryGridView.tsx`: Responsive grid rendering all 8 category cards.
+6. `MissingCoursesView.tsx`: Accordion/table of missing mandatory courses.
+7. `InProgressView.tsx`: List of currently enrolled courses with "กำลังศึกษา" badge.
+8. `GraduationBannerView.tsx`: Prominent graduation forecast indicator banner.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `cd projects/credit-tracker && npx vitest run src/views/CategoryCardView.test.tsx`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add projects/credit-tracker/index.html projects/credit-tracker/assets/css/style.css
-git commit -m "feat: create responsive UI layout and modern dark theme stylesheets"
+git add projects/credit-tracker/src/views/
+git commit -m "feat(view): implement MVC presentational components with Tailwind CSS v4 and Lucide icons"
 ```
 
 ---
 
-### Task 5: App Controller, PDF.js Integration & LocalStorage Persistence
+### Task 5: [Controller & Storage] App Controller, PDF Extractor & LocalStorage Adapter
 
 **Files:**
-- Create: `projects/credit-tracker/assets/js/app.js`
-- Modify: `projects/credit-tracker/index.html` (integrate scripts)
+- Create: `projects/credit-tracker/src/models/storage.ts`
+- Create: `projects/credit-tracker/src/controllers/pdfExtractor.ts`
+- Create: `projects/credit-tracker/src/controllers/useCreditTrackerController.ts`
+- Modify: `projects/credit-tracker/src/App.tsx`
+- Modify: `projects/credit-tracker/src/main.tsx`
+- Modify: `projects/credit-tracker/src/index.css`
+- Test: `projects/credit-tracker/src/models/storage.test.ts`
 
 **Interfaces:**
-- Consumes:
-  - `pdfjsLib` (from CDN)
-  - `parseTranscriptText` (from `parser.js`)
-  - `auditGraduation` (from `calculator.js`)
-  - `CURRICULUM_STRUCTURE` (from `curriculum-data.js`)
-- Produces: Interactive web application handling file drops, re-rendering UI on path changes, and caching results in `localStorage`.
+- `storage.ts`:
+  - `saveAuditState(data: { studentInfo: StudentInfo; courses: CourseEntry[]; path: AlternativePath }): void`
+  - `loadAuditState(): { studentInfo: StudentInfo; courses: CourseEntry[]; path: AlternativePath } | null`
+  - `clearAuditState(): void`
+- `pdfExtractor.ts`:
+  - `extractTextFromPdf(file: File): Promise<string>`
+- `useCreditTrackerController`:
+  - Returns: `{ auditResult, isProcessing, error, currentPath, handleFileUpload, handleDemoLoad, handlePathChange, handleReset }`
 
-- [ ] **Step 1: Implement PDF extraction and application lifecycle in `app.js`**
+- [ ] **Step 1: Write test for storage adapter model**
 
-Implement:
-1. `initApp()`: Check `localStorage` for cached transcript data; if found, render immediately; also provide button to load pre-bundled current student data (`transcript_data.json`).
-2. PDF file handler: Read dropped/uploaded file using `pdfjsLib.getDocument`, extract text from all pages into one string, pass to `parseTranscriptText`.
-3. Audit executor: Run `auditGraduation`, store result, and render:
-   - Total credits counter animation.
-   - SVG circular progress update.
-   - Category progress cards with colored progress bars.
-   - Missing courses accordion/table with semester badges.
-   - In-progress course badges.
-   - Graduation status banner.
-4. Interactive Path Selector: Switch between "ปัญหาพิเศษ" (6 cr) and "สหกิจศึกษา" (6 cr) with instant recalculation.
+Create `projects/credit-tracker/src/models/storage.test.ts`:
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+import { saveAuditState, loadAuditState, clearAuditState } from './storage';
 
-- [ ] **Step 2: Test in browser using local server or file load**
+describe('Storage Adapter Model', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
-Verify loading states, error handling on non-PDF files, drag & drop visual feedback, and responsive layout.
+  it('should save and load audit state from localStorage', () => {
+    const payload = {
+      studentInfo: { name: 'Teerasak', studentId: '67050252', degree: 'B.Sc.', program: 'CS' },
+      courses: [{ code: '05506003', title: 'PROG', credits: 3, grade: 'C+', semester: '1/2024', isCompleted: true }],
+      path: 'special_problem' as const
+    };
+    saveAuditState(payload);
+    const loaded = loadAuditState();
+    expect(loaded).toEqual(payload);
+  });
 
-- [ ] **Step 3: Commit**
+  it('should return null when storage is cleared', () => {
+    clearAuditState();
+    expect(loadAuditState()).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `cd projects/credit-tracker && npx vitest run src/models/storage.test.ts`
+Expected: FAIL with `Cannot find module './storage'`.
+
+- [ ] **Step 3: Implement `storage.ts`, `pdfExtractor.ts`, `useCreditTrackerController.ts`, and wire `App.tsx`**
+
+1. `src/models/storage.ts`: Pure localStorage save/load/clear under key `kmitl_credit_tracker_v1`.
+2. `src/controllers/pdfExtractor.ts`: Configures `pdfjs-dist` worker and iterates PDF pages to extract plain text lines.
+3. `src/controllers/useCreditTrackerController.ts`: Custom React hook acting as the Controller:
+   - On mount: loads cached state from `storage.ts` and calculates initial audit.
+   - `handleFileUpload(file)`: calls `pdfExtractor.extractTextFromPdf` -> calls `parser.parseTranscriptText` -> calls `calculator.auditGraduation` -> updates state & persists to `storage`.
+   - `handleDemoLoad()`: loads sample transcript data -> updates state & persists.
+   - `handlePathChange(path)`: switches `selectedPath` -> recalculates audit with `calculator.auditGraduation`.
+   - `handleReset()`: clears state and removes localStorage cache.
+4. `src/App.tsx`: Acts as the root view composition, binding `useCreditTrackerController` outputs directly into `UploadView`, `StudentSummaryView`, `PathSelectorView`, `CategoryGridView`, `MissingCoursesView`, and `GraduationBannerView`.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `cd projects/credit-tracker && npx vitest run src/models/storage.test.ts`
+Expected: PASS.
+
+- [ ] **Step 5: Run application build check**
+
+Run: `cd projects/credit-tracker && npm run build`
+Expected: Vite and TypeScript build passes cleanly.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add projects/credit-tracker/assets/js/app.js projects/credit-tracker/index.html
-git commit -m "feat: wire PDF.js extractor, state controller and UI renderer"
+git add projects/credit-tracker/src/models/storage.ts projects/credit-tracker/src/controllers/ projects/credit-tracker/src/App.tsx projects/credit-tracker/src/main.tsx projects/credit-tracker/src/index.css
+git commit -m "feat(controller): implement MVC controller hooks, PDF extractor, storage adapter, and App wiring"
 ```
 
 ---
 
-### Task 6: End-to-End Verification, Documentation & Final Polish
+### Task 6: End-to-End Verification with Real Transcript & Final Polish
 
 **Files:**
-- Create: `projects/credit-tracker/README.md`
-- Test: Verify with `c:\Users\oatxx\kmitl\Tracnscript\transcript.pdf`
+- Create: `projects/credit-tracker/src/test/e2e-transcript.test.ts`
+- Documentation: `projects/credit-tracker/README.md`
 
-- [ ] **Step 1: Write project documentation `README.md`**
+- [ ] **Step 1: Write E2E integration test using actual student transcript data**
 
-Provide clear explanation:
-- What the app does.
-- How to open (e.g. VS Code Live Server or python http.server).
-- How to upload transcripts or use pre-loaded data.
-- Breakdown of CS KMITL 2564 curriculum rules used.
+Create `projects/credit-tracker/src/test/e2e-transcript.test.ts`:
+Verify that using the real raw text / parsed courses of Teerasak (Student ID 67050252):
+1. Exactly 85 credits are recognized as earned.
+2. In-progress courses (e.g. 05506014, 05506235, 05506237, 05506258, 90644010) are identified with 0 earned credits and listed in In-Progress.
+3. Path A (Special Problem) requires 05506098 + 05506099 (both missing).
+4. Path B (Cooperative Education) requires 05506117 (missing).
+5. Toggling path correctly updates the graduation forecast.
+6. GPA equals 3.03.
 
-- [ ] **Step 2: Run all automated tests**
+- [ ] **Step 2: Run all test suites across the project**
 
-Run: `node projects/credit-tracker/tests/test-curriculum.js && node projects/credit-tracker/tests/test-parser.js && node projects/credit-tracker/tests/test-calculator.js`
-Expected: All tests pass.
+Run: `cd projects/credit-tracker && npx vitest run`
+Expected: All test suites PASS (Curriculum Model, Parser Model, Calculator Model, View Component, Storage Adapter, E2E).
 
-- [ ] **Step 3: Launch local HTTP server and verify live preview**
+- [ ] **Step 3: Verify production build and preview**
 
-Verify real transcript upload in browser, confirm 85 credits earned + in-progress courses, and check category math.
+Run: `cd projects/credit-tracker && npm run build`
+Expected: Vite build generates `dist/` directory cleanly without errors.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Commit and finalize**
 
 ```bash
-git add projects/credit-tracker/README.md
-git commit -m "docs: add comprehensive README and finalize credit tracker webapp"
+git add projects/credit-tracker/src/test/ projects/credit-tracker/README.md
+git commit -m "test: add E2E verification with real transcript and complete MVC project documentation"
 ```

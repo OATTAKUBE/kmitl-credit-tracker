@@ -25,6 +25,12 @@
 | B: Static JSON | ง่ายแต่อัปเดตยาก | ไม่เลือก |
 | **C: Hybrid (เลือก)** | pdf.js parse + localStorage cache | **เลือก** |
 
+### สถาปัตยกรรมระบบ (MVC Architecture)
+โครงสร้างโปรเจกต์ถูกออกแบบตามรูปแบบ **Model-View-Controller (MVC)** อย่างเข้มงวด:
+- **Model (`src/models/`):** Pure TypeScript จัดการ Domain Logic, ข้อมูลหลักสูตร (135 หน่วยกิต), Regex Parser สำหรับทรานสคริปต์, ตรรกะคำนวณและตรวจสอบเงื่อนไขการจบการศึกษา (Audit Engine) และ LocalStorage Adapter โดยแยกตัวเป็นอิสระจาก React/DOM 100% (สามารถทดสอบด้วย Vitest ได้อย่างรวดเร็วและแม่นยำ)
+- **View (`src/views/`):** Pure Presentational React Components สไตล์ Dark Academic ออกแบบด้วย Tailwind CSS v4 และ Lucide Icons รับข้อมูลผ่าน Props และส่ง Event ออกผ่าน Callback เท่านั้น ไม่มีการคำนวณ Business Logic โดยตรง
+- **Controller (`src/controllers/`):** Custom Hooks และ Orchestrator (เช่น `useCreditTrackerController`) ทำหน้าที่เชื่อมประสานระหว่าง View กับ Model จัดการ State และจัดการ Side-effects เช่น การอัปโหลดไฟล์ การอ่าน PDF และการบันทึกข้อมูล
+
 ## Technical Design
 
 ### โครงสร้างข้อมูลสำคัญ
