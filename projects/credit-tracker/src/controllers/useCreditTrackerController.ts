@@ -10,7 +10,6 @@ import { auditGraduation } from '../models/calculator';
 import { parseTranscriptText } from '../models/parser';
 import { saveAuditState, loadAuditState, clearAuditState } from '../models/storage';
 import { extractTextFromPdf } from './pdfExtractor';
-import { SAMPLE_TRANSCRIPT_TEXT } from '../models/sampleTranscript';
 import { detectCurriculum, DEFAULT_CURRICULUM_ID } from '../models/curriculums/registry';
 
 interface RawStudentData {
@@ -27,7 +26,6 @@ export interface CreditTrackerController {
   currentCurriculum: CurriculumId;
   hasLoadedData: boolean;
   handleFileUpload: (file: File) => Promise<void>;
-  handleDemoLoad: () => void;
   handlePathChange: (path: AlternativePath) => void;
   handleCurriculumChange: (curriculumId: CurriculumId) => void;
   handleReset: () => void;
@@ -137,45 +135,6 @@ export function useCreditTrackerController(): CreditTrackerController {
     }
   }, [currentCurriculum]);
 
-  const handleDemoLoad = useCallback(() => {
-    setError(null);
-    setIsProcessing(false);
-
-    try {
-      const parsed = parseTranscriptText(SAMPLE_TRANSCRIPT_TEXT);
-      const path: AlternativePath = 'special_problem';
-      const curriculumId: CurriculumId = 'cs_2564';
-
-      const result = auditGraduation(
-        parsed.studentInfo,
-        parsed.allCourses,
-        path,
-        parsed.summary.cumulativeGPA,
-        curriculumId
-      );
-
-      setAuditResult(result);
-      setCurrentPath(path);
-      setCurrentCurriculum(curriculumId);
-      setRawStudentData({
-        studentInfo: parsed.studentInfo,
-        courses: parsed.allCourses,
-        cumulativeGPA: parsed.summary.cumulativeGPA,
-      });
-
-      saveAuditState({
-        studentInfo: parsed.studentInfo,
-        courses: parsed.allCourses,
-        path,
-        curriculumId,
-        cumulativeGPA: parsed.summary.cumulativeGPA,
-      });
-    } catch (err) {
-      console.error('Failed to load demo data:', err);
-      setError('เกิดข้อผิดพลาดในการโหลดข้อมูลตัวอย่าง');
-    }
-  }, []);
-
   const handlePathChange = useCallback(
     (newPath: AlternativePath) => {
       setCurrentPath(newPath);
@@ -242,7 +201,6 @@ export function useCreditTrackerController(): CreditTrackerController {
     currentCurriculum,
     hasLoadedData: auditResult !== null,
     handleFileUpload,
-    handleDemoLoad,
     handlePathChange,
     handleCurriculumChange,
     handleReset,

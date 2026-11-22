@@ -27,8 +27,8 @@ describe('useCreditTrackerController Hook', () => {
   it('restores cached audit state on mount', () => {
     saveAuditState({
       studentInfo: {
-        name: 'Mr. Teerasak Khlaiphet',
-        studentId: '67050252',
+        name: 'Mr. Sample Student',
+        studentId: '65050000',
         degree: 'Bachelor of Science',
         program: 'Computer Science',
       },
@@ -51,31 +51,32 @@ describe('useCreditTrackerController Hook', () => {
     expect(result.current.hasLoadedData).toBe(true);
     expect(result.current.currentPath).toBe('coop');
     expect(result.current.auditResult).not.toBeNull();
-    expect(result.current.auditResult?.studentInfo.studentId).toBe('67050252');
-  });
-
-  it('loads demo transcript data on handleDemoLoad', () => {
-    const { result } = renderHook(() => useCreditTrackerController());
-
-    act(() => {
-      result.current.handleDemoLoad();
-    });
-
-    expect(result.current.hasLoadedData).toBe(true);
-    expect(result.current.auditResult).not.toBeNull();
-    expect(result.current.auditResult?.studentInfo.name).toBe('Mr. Teerasak Khlaiphet');
-    expect(result.current.auditResult?.studentInfo.studentId).toBe('67050252');
-    expect(result.current.auditResult?.totalEarned).toBe(85);
-    expect(result.current.auditResult?.cumulativeGPA).toBe(3.03);
-    expect(result.current.currentPath).toBe('special_problem');
+    expect(result.current.auditResult?.studentInfo.studentId).toBe('65050000');
   });
 
   it('switches study path and updates audit calculations on handlePathChange', () => {
-    const { result } = renderHook(() => useCreditTrackerController());
-
-    act(() => {
-      result.current.handleDemoLoad();
+    saveAuditState({
+      studentInfo: {
+        name: 'Mr. Sample Student',
+        studentId: '65050000',
+        degree: 'Bachelor of Science',
+        program: 'Computer Science',
+      },
+      courses: [
+        {
+          code: '05506003',
+          title: 'PROGRAMMING FUNDAMENTALS',
+          credits: 3,
+          grade: 'C+',
+          semester: '1st Semester, Year, 2024-2025',
+          isCompleted: true,
+        },
+      ],
+      path: 'special_problem',
+      cumulativeGPA: 3.0,
     });
+
+    const { result } = renderHook(() => useCreditTrackerController());
 
     expect(result.current.currentPath).toBe('special_problem');
     const initialMissing = result.current.auditResult?.missingMandatory.length ?? 0;
@@ -91,11 +92,28 @@ describe('useCreditTrackerController Hook', () => {
   });
 
   it('resets state and clears storage on handleReset', () => {
-    const { result } = renderHook(() => useCreditTrackerController());
-
-    act(() => {
-      result.current.handleDemoLoad();
+    saveAuditState({
+      studentInfo: {
+        name: 'Mr. Sample Student',
+        studentId: '65050000',
+        degree: 'Bachelor of Science',
+        program: 'Computer Science',
+      },
+      courses: [
+        {
+          code: '05506003',
+          title: 'PROGRAMMING FUNDAMENTALS',
+          credits: 3,
+          grade: 'C+',
+          semester: '1st Semester, Year, 2024-2025',
+          isCompleted: true,
+        },
+      ],
+      path: 'special_problem',
+      cumulativeGPA: 3.0,
     });
+
+    const { result } = renderHook(() => useCreditTrackerController());
     expect(result.current.hasLoadedData).toBe(true);
 
     act(() => {

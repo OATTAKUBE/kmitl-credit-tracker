@@ -8,8 +8,8 @@ describe('Storage Adapter Model', () => {
 
   const sampleState: StoredAuditState = {
     studentInfo: {
-      name: 'Mr. Teerasak Khlaiphet',
-      studentId: '67050252',
+      name: 'Mr. Sample Student',
+      studentId: '65050000',
       degree: 'Bachelor of Science',
       program: 'Computer Science',
     },

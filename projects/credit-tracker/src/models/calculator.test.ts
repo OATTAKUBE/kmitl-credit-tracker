@@ -4,8 +4,8 @@ import { parseTranscriptText } from './parser';
 import { CourseEntry, StudentInfo } from './types';
 
 const mockStudent: StudentInfo = {
-  name: 'Mr. Teerasak Khlaiphet',
-  studentId: '67050252',
+  name: 'Mr. Sample Student',
+  studentId: '65050000',
   degree: 'Bachelor of Science',
   program: 'Computer Science',
 };
@@ -26,8 +26,8 @@ const mockCourses: CourseEntry[] = [
 const FULL_REAL_TRANSCRIPT = `
 ( Unofficial Transcript )
 Photo
-Name Mr. Teerasak Khlaiphet Student ID 67050252
-Date of Birth July 5, 2005 Date of Admission 2024
+Name Mr. Sample Student Student ID 65050000
+Date of Birth January 1, 2003 Date of Admission 2022
 Degree Bachelor of Science Date of Graduation N/A
 Program Computer Science
 COURSE TITLE CREDIT GRADE COURSE TITLE CREDIT GRADE
@@ -184,13 +184,13 @@ describe('Credit Audit Calculator Model', () => {
     });
   });
 
-  describe('Full Real Transcript Verification (Teerasak Khlaiphet)', () => {
+  describe('Full Sample Transcript Verification (Sample Student)', () => {
     it('should calculate audit metrics matching official transcript values exactly', () => {
       const parsed = parseTranscriptText(FULL_REAL_TRANSCRIPT);
       const audit = auditGraduation(parsed.studentInfo, parsed.allCourses, 'special_problem', parsed.summary.cumulativeGPA);
 
-      expect(audit.studentInfo.name).toBe('Mr. Teerasak Khlaiphet');
-      expect(audit.studentInfo.studentId).toBe('67050252');
+      expect(audit.studentInfo.name).toBe('Mr. Sample Student');
+      expect(audit.studentInfo.studentId).toBe('65050000');
       expect(audit.totalEarned).toBe(85);
       expect(audit.totalRequired).toBe(135);
       expect(audit.cumulativeGPA).toBe(3.03);

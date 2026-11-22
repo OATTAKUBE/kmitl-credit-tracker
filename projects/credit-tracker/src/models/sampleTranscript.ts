@@ -4,8 +4,8 @@
  */
 export const SAMPLE_TRANSCRIPT_TEXT = `( Unofficial Transcript )
 Photo
-Name Mr. Teerasak Khlaiphet Student ID 67050252
-Date of Birth July 5, 2005 Date of Admission 2024
+Name Mr. Sample Student Student ID 65050000
+Date of Birth January 1, 2003 Date of Admission 2022
 Degree Bachelor of Science Date of Graduation N/A
 Program Computer Science
 COURSE TITLE CREDIT GRADE COURSE TITLE CREDIT GRADE

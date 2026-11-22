@@ -174,7 +174,7 @@ import { describe, it, expect } from 'vitest';
 import { parseTranscriptText } from './parser';
 
 const SAMPLE_TRANSCRIPT = `
-Name Mr. Teerasak Khlaiphet Student ID 67050252
+Name Mr. Sample Student Student ID 65050000
 Degree Bachelor of Science Date of Graduation N/A
 Program Computer Science
 COURSE TITLE CREDIT GRADE COURSE TITLE CREDIT GRADE
@@ -197,8 +197,8 @@ Cumulative GPA: 3.03
 describe('Transcript Parser Model', () => {
   it('should parse student metadata correctly', () => {
     const result = parseTranscriptText(SAMPLE_TRANSCRIPT);
-    expect(result.studentInfo.studentId).toBe('67050252');
-    expect(result.studentInfo.name).toBe('Mr. Teerasak Khlaiphet');
+    expect(result.studentInfo.studentId).toBe('65050000');
+    expect(result.studentInfo.name).toBe('Mr. Sample Student');
     expect(result.studentInfo.program).toBe('Computer Science');
     expect(result.summary.totalCreditsEarned).toBe(85);
     expect(result.summary.cumulativeGPA).toBe(3.03);
@@ -280,8 +280,8 @@ import { auditGraduation } from './calculator';
 import { CourseEntry, StudentInfo } from './types';
 
 const mockStudent: StudentInfo = {
-  name: 'Mr. Teerasak Khlaiphet',
-  studentId: '67050252',
+  name: 'Mr. Sample Student',
+  studentId: '65050000',
   degree: 'B.Sc.',
   program: 'Computer Science'
 };
@@ -481,7 +481,7 @@ describe('Storage Adapter Model', () => {
 
   it('should save and load audit state from localStorage', () => {
     const payload = {
-      studentInfo: { name: 'Teerasak', studentId: '67050252', degree: 'B.Sc.', program: 'CS' },
+      studentInfo: { name: 'Sample Student', studentId: '65050000', degree: 'B.Sc.', program: 'CS' },
       courses: [{ code: '05506003', title: 'PROG', credits: 3, grade: 'C+', semester: '1/2024', isCompleted: true }],
       path: 'special_problem' as const
     };
@@ -542,7 +542,7 @@ git commit -m "feat(controller): implement MVC controller hooks, PDF extractor, 
 - [ ] **Step 1: Write E2E integration test using actual student transcript data**
 
 Create `projects/credit-tracker/src/test/e2e-transcript.test.ts`:
-Verify that using the real raw text / parsed courses of Teerasak (Student ID 67050252):
+Verify that using the sample raw text / parsed courses of Sample Student (Student ID 65050000):
 1. Exactly 85 credits are recognized as earned.
 2. In-progress courses (e.g. 05506014, 05506235, 05506237, 05506258, 90644010) are identified with 0 earned credits and listed in In-Progress.
 3. Path A (Special Problem) requires 05506098 + 05506099 (both missing).

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parseTranscriptText } from './parser';
 
 const SAMPLE_TRANSCRIPT = `
-Name Mr. Teerasak Khlaiphet Student ID 67050252
+Name Mr. Sample Student Student ID 65050000
 Degree Bachelor of Science Date of Graduation N/A
 Program Computer Science
 COURSE TITLE CREDIT GRADE COURSE TITLE CREDIT GRADE
@@ -25,8 +25,8 @@ Cumulative GPA: 3.03
 const FULL_REAL_TRANSCRIPT = `
 ( Unofficial Transcript )
 Photo
-Name Mr. Teerasak Khlaiphet Student ID 67050252
-Date of Birth July 5, 2005 Date of Admission 2024
+Name Mr. Sample Student Student ID 65050000
+Date of Birth January 1, 2003 Date of Admission 2022
 Degree Bachelor of Science Date of Graduation N/A
 Program Computer Science
 COURSE TITLE CREDIT GRADE COURSE TITLE CREDIT GRADE
@@ -91,8 +91,8 @@ describe('Transcript Parser Model', () => {
   describe('Basic Sample Transcript', () => {
     it('should parse student metadata correctly', () => {
       const result = parseTranscriptText(SAMPLE_TRANSCRIPT);
-      expect(result.studentInfo.studentId).toBe('67050252');
-      expect(result.studentInfo.name).toBe('Mr. Teerasak Khlaiphet');
+      expect(result.studentInfo.studentId).toBe('65050000');
+      expect(result.studentInfo.name).toBe('Mr. Sample Student');
       expect(result.studentInfo.program).toBe('Computer Science');
       expect(result.studentInfo.degree).toBe('Bachelor of Science');
       expect(result.summary.totalCreditsEarned).toBe(85);
@@ -149,8 +149,8 @@ describe('Transcript Parser Model', () => {
       const result = parseTranscriptText(FULL_REAL_TRANSCRIPT);
 
       expect(result.studentInfo).toEqual({
-        name: 'Mr. Teerasak Khlaiphet',
-        studentId: '67050252',
+        name: 'Mr. Sample Student',
+        studentId: '65050000',
         degree: 'Bachelor of Science',
         program: 'Computer Science',
       });

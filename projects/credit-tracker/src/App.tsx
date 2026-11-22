@@ -28,7 +28,6 @@ export const App: React.FC = () => {
     currentCurriculum,
     hasLoadedData,
     handleFileUpload,
-    handleDemoLoad,
     handlePathChange,
     handleCurriculumChange,
     handleReset,
@@ -107,7 +106,6 @@ export const App: React.FC = () => {
           <div className="max-w-2xl mx-auto my-8">
             <UploadView
               onFileUpload={handleFileUpload}
-              onDemoLoad={handleDemoLoad}
               isProcessing={isProcessing}
               error={error}
             />

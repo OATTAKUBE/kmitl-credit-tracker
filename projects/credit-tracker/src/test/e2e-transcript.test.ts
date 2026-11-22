@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { parseTranscriptText } from '../models/parser';
 import { auditGraduation } from '../models/calculator';
 import { saveAuditState, loadAuditState } from '../models/storage';
@@ -6,19 +6,25 @@ import { SAMPLE_TRANSCRIPT_TEXT } from '../models/sampleTranscript';
 import { ALTERNATIVE_PATHS } from '../models/curriculum';
 import { renderHook, act } from '@testing-library/react';
 import { useCreditTrackerController } from '../controllers/useCreditTrackerController';
+import * as pdfExtractorModule from '../controllers/pdfExtractor';
 
-describe('E2E Real Transcript Verification Suite', () => {
+vi.mock('../controllers/pdfExtractor', () => ({
+  extractTextFromPdf: vi.fn(),
+}));
+
+describe('E2E Sample Transcript Verification Suite', () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.clearAllMocks();
   });
 
   describe('Full Pipeline: Raw Transcript Text -> Parser -> Graduation Audit', () => {
-    it('accurately parses student identity and graduation summary from real transcript', () => {
+    it('accurately parses student identity and graduation summary from sample transcript', () => {
       const parsed = parseTranscriptText(SAMPLE_TRANSCRIPT_TEXT);
 
       // Student metadata verification
-      expect(parsed.studentInfo.studentId).toBe('67050252');
-      expect(parsed.studentInfo.name).toBe('Mr. Teerasak Khlaiphet');
+      expect(parsed.studentInfo.studentId).toBe('65050000');
+      expect(parsed.studentInfo.name).toBe('Mr. Sample Student');
       expect(parsed.studentInfo.program).toBe('Computer Science');
       expect(parsed.studentInfo.degree).toBe('Bachelor of Science');
 
@@ -45,8 +51,8 @@ describe('E2E Real Transcript Verification Suite', () => {
       );
 
       // Core audit metrics
-      expect(audit.studentInfo.studentId).toBe('67050252');
-      expect(audit.studentInfo.name).toBe('Mr. Teerasak Khlaiphet');
+      expect(audit.studentInfo.studentId).toBe('65050000');
+      expect(audit.studentInfo.name).toBe('Mr. Sample Student');
       expect(audit.totalEarned).toBe(85);
       expect(audit.totalRequired).toBe(135);
       expect(audit.cumulativeGPA).toBe(3.03);
@@ -109,7 +115,7 @@ describe('E2E Real Transcript Verification Suite', () => {
       expect(hasAliasCourse).toBe(true);
     });
 
-    it('correctly audits all 8 curriculum categories for student Teerasak Khlaiphet', () => {
+    it('correctly audits all 8 curriculum categories for sample student', () => {
       const parsed = parseTranscriptText(SAMPLE_TRANSCRIPT_TEXT);
       const audit = auditGraduation(
         parsed.studentInfo,
@@ -271,7 +277,7 @@ describe('E2E Real Transcript Verification Suite', () => {
       // 3. Load from LocalStorage
       const loaded = loadAuditState();
       expect(loaded).not.toBeNull();
-      expect(loaded!.studentInfo.studentId).toBe('67050252');
+      expect(loaded!.studentInfo.studentId).toBe('65050000');
       expect(loaded!.courses.length).toBe(34);
       expect(loaded!.path).toBe('special_problem');
       expect(loaded!.cumulativeGPA).toBe(3.03);
@@ -298,22 +304,26 @@ describe('E2E Real Transcript Verification Suite', () => {
   });
 
   describe('Controller Layer End-to-End State Integration', () => {
-    it('loads demo transcript through controller and manages full user workflow', () => {
+    it('processes sample transcript through controller and manages full user workflow', async () => {
+      const extractMock = vi.mocked(pdfExtractorModule.extractTextFromPdf);
+      extractMock.mockResolvedValueOnce(SAMPLE_TRANSCRIPT_TEXT);
+
       const { result } = renderHook(() => useCreditTrackerController());
 
       expect(result.current.hasLoadedData).toBe(false);
       expect(result.current.auditResult).toBeNull();
 
-      // Trigger demo load
-      act(() => {
-        result.current.handleDemoLoad();
+      // Trigger file upload with sample transcript
+      await act(async () => {
+        await result.current.handleFileUpload(new File(['pdf'], 'sample.pdf', { type: 'application/pdf' }));
       });
 
       expect(result.current.hasLoadedData).toBe(true);
       expect(result.current.auditResult).not.toBeNull();
 
       const audit = result.current.auditResult!;
-      expect(audit.studentInfo.studentId).toBe('67050252');
+      expect(audit.studentInfo.studentId).toBe('65050000');
+      expect(audit.studentInfo.name).toBe('Mr. Sample Student');
       expect(audit.totalEarned).toBe(85);
       expect(audit.cumulativeGPA).toBe(3.03);
       expect(audit.inProgressCourses.length).toBe(5);

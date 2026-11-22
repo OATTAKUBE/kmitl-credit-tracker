@@ -12,31 +12,24 @@ import {
 import { CategoryProgress, CurriculumCourse, CourseEntry, StudentInfo } from '../models/types';
 
 describe('UploadView Component', () => {
-  it('should render drop zone and demo button', () => {
+  it('should render drop zone correctly', () => {
     const handleUpload = vi.fn();
-    const handleDemo = vi.fn();
     render(
       <UploadView
         onFileUpload={handleUpload}
-        onDemoLoad={handleDemo}
         isProcessing={false}
         error={null}
       />
     );
 
     expect(screen.getByText(/ลากไฟล์ใบทรานสคริปต์/)).toBeDefined();
-    expect(screen.getByText(/ลองใช้ข้อมูลตัวอย่าง/)).toBeDefined();
-
-    const demoBtn = screen.getByRole('button', { name: /ลองใช้ข้อมูลตัวอย่าง/ });
-    fireEvent.click(demoBtn);
-    expect(handleDemo).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/รองรับไฟล์ใบทรานสคริปต์ฉบับไม่เป็นทางการ/)).toBeDefined();
   });
 
   it('should display error message when error prop is provided', () => {
     render(
       <UploadView
         onFileUpload={vi.fn()}
-        onDemoLoad={vi.fn()}
         isProcessing={false}
         error="ไฟล์ PDF ไม่ถูกต้องหรือไม่ใช่ใบทรานสคริปต์ KMITL"
       />
@@ -50,7 +43,6 @@ describe('UploadView Component', () => {
     render(
       <UploadView
         onFileUpload={vi.fn()}
-        onDemoLoad={vi.fn()}
         isProcessing={true}
         error={null}
       />

@@ -1,16 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { UploadCloud, Sparkles, AlertTriangle, Loader2, FileText } from 'lucide-react';
+import { UploadCloud, AlertTriangle, Loader2, FileText } from 'lucide-react';
 
 export interface UploadViewProps {
   onFileUpload: (file: File) => void;
-  onDemoLoad: () => void;
   isProcessing: boolean;
   error: string | null;
 }
 
 export const UploadView: React.FC<UploadViewProps> = ({
   onFileUpload,
-  onDemoLoad,
   isProcessing,
   error,
 }) => {
@@ -134,20 +132,6 @@ export const UploadView: React.FC<UploadViewProps> = ({
           </div>
         </div>
       )}
-
-      {/* Demo Data Option */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-        <span className="text-xs text-slate-400">ยังไม่มีไฟล์ทรานสคริปต์?</span>
-        <button
-          type="button"
-          onClick={onDemoLoad}
-          disabled={isProcessing}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 hover:border-indigo-500/60 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
-        >
-          <Sparkles className="w-4 h-4 text-indigo-400" />
-          ลองใช้ข้อมูลตัวอย่าง (Demo Data)
-        </button>
-      </div>
     </div>
   );
 };

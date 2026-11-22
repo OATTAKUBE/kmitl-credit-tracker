@@ -80,7 +80,6 @@ src/
   Recalculates missing courses and eligibility in real time upon switching.
 - **Graduation Forecast & Missing Course Checklist**: Actionable breakdown of outstanding mandatory courses with color-coded chips distinguishing incomplete courses from in-progress enrollments.
 - **Local Cache Persistence**: Transcript audit results persist automatically across browser tabs and refreshes using `localStorage`.
-- **One-Click Demo Mode**: Experience the app instantly without uploading a PDF using sample transcript data.
 
 ---
 
@@ -171,10 +170,10 @@ The project maintains 100% test pass rates across all layers:
 - **View Unit Tests**:
   - `CategoryCardView.test.tsx` & `Views.test.tsx`: Tests rendering of badges, progress bars, course lists, empty states, and accessibility attributes.
 - **Controller & App Integration Tests**:
-  - `useCreditTrackerController.test.ts`: Tests state lifecycle, demo loading, error handling, path switching, and cache restoration.
+  - `useCreditTrackerController.test.ts`: Tests state lifecycle, file processing, error handling, path switching, and cache restoration.
   - `App.test.tsx`: Tests complete root view mounting and user interactions.
 - **End-to-End Transcript Verification (`src/test/e2e-transcript.test.ts`)**:
-  - Validates the entire pipeline from raw transcript text to full audit on student **Teerasak Khlaiphet (67050252)**.
+  - Validates the entire pipeline from raw transcript text to full audit on student **Sample Student (65050000)**.
   - Confirms exact values: **85 credits earned** (29 completed courses), **15 credits in-progress** (5 courses), **3.03 cumulative GPA**, and accurate missing mandatory course counts across Special Problem (8 missing) and Cooperative Education (7 missing).
 
 ---
