@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, BookOpen, Calendar } from 'lucide-react';
-import { CourseEntry } from '../models/types';
+import type { CourseEntry } from '../models/types';
 
 export interface InProgressViewProps {
   courses: CourseEntry[];

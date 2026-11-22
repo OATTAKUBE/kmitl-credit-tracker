@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Clock, BookOpen } from 'lucide-react';
-import { CategoryProgress } from '../models/types';
+import type { CategoryProgress } from '../models/types';
 
 export interface CategoryCardViewProps {
   category: CategoryProgress;

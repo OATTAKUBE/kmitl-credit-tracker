@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle, CheckCircle2, Calendar } from 'lucide-react';
-import { CurriculumCourse } from '../models/types';
+import type { CurriculumCourse } from '../models/types';
 
 export interface MissingCoursesViewProps {
   missing: CurriculumCourse[];

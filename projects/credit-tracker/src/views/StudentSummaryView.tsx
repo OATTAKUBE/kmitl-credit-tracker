@@ -1,6 +1,6 @@
 import React from 'react';
 import { GraduationCap, Award, BookOpen, Clock, User } from 'lucide-react';
-import { StudentInfo } from '../models/types';
+import type { StudentInfo } from '../models/types';
 
 export interface StudentSummaryViewProps {
   studentInfo: StudentInfo;

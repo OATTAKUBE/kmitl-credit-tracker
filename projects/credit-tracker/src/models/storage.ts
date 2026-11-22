@@ -1,4 +1,4 @@
-import { StudentInfo, CourseEntry, AlternativePath } from './types';
+import type { StudentInfo, CourseEntry, AlternativePath } from './types';
 
 export const STORAGE_KEY = 'kmitl_credit_tracker_v1';
 

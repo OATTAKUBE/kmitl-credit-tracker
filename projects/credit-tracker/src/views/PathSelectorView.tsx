@@ -1,6 +1,6 @@
 import React from 'react';
 import { Compass, CheckCircle2, FileCode, Briefcase } from 'lucide-react';
-import { AlternativePath } from '../models/types';
+import type { AlternativePath } from '../models/types';
 
 export interface PathSelectorViewProps {
   currentPath: AlternativePath;
@@ -27,12 +27,14 @@ export const PathSelectorView: React.FC<PathSelectorViewProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+      <div role="radiogroup" aria-label="เลือกแผนการศึกษาทางเลือก" className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
         {/* Option 1: Special Problem */}
         <button
           type="button"
+          role="radio"
+          aria-checked={currentPath === 'special_problem'}
           onClick={() => onSelectPath('special_problem')}
-          className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+          className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
             currentPath === 'special_problem'
               ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 text-slate-100'
               : 'bg-slate-950/50 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60'
@@ -66,8 +68,10 @@ export const PathSelectorView: React.FC<PathSelectorViewProps> = ({
         {/* Option 2: Cooperative Education */}
         <button
           type="button"
+          role="radio"
+          aria-checked={currentPath === 'coop'}
           onClick={() => onSelectPath('coop')}
-          className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+          className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
             currentPath === 'coop'
               ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 text-slate-100'
               : 'bg-slate-950/50 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60'

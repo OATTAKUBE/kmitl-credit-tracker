@@ -57,6 +57,13 @@ export const UploadView: React.FC<UploadViewProps> = ({
     }
   };
 
+  const handleKeyDownZone = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClickUploadZone();
+    }
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
       {/* Hidden File Input */}
@@ -67,15 +74,20 @@ export const UploadView: React.FC<UploadViewProps> = ({
         accept=".pdf,application/pdf"
         className="hidden"
         disabled={isProcessing}
+        aria-label="อัปโหลดไฟล์ใบทรานสคริปต์ PDF"
       />
 
       {/* Drag & Drop Zone */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="คลิกหรือลากไฟล์ใบทรานสคริปต์ PDF มาวางที่นี่เพื่ออัปโหลด"
         onClick={handleClickUploadZone}
+        onKeyDown={handleKeyDownZone}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-3xl p-10 text-center transition-all cursor-pointer select-none backdrop-blur-sm ${
+        className={`relative border-2 border-dashed rounded-3xl p-10 text-center transition-all cursor-pointer select-none backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
           isDragOver
             ? 'border-indigo-400 bg-indigo-950/40 shadow-indigo-500/10 shadow-lg scale-[1.01]'
             : 'border-slate-700 bg-slate-900/60 hover:border-indigo-500/60 hover:bg-slate-900/80 shadow-xl'
@@ -130,7 +142,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
           type="button"
           onClick={onDemoLoad}
           disabled={isProcessing}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 hover:border-indigo-500/60 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 hover:border-indigo-500/60 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
         >
           <Sparkles className="w-4 h-4 text-indigo-400" />
           ลองใช้ข้อมูลตัวอย่าง (Demo Data)

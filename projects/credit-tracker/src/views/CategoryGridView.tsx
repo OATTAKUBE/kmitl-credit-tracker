@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutGrid } from 'lucide-react';
-import { CategoryId, CategoryProgress } from '../models/types';
+import type { CategoryId, CategoryProgress } from '../models/types';
 import { CategoryCardView } from './CategoryCardView';
 
 export interface CategoryGridViewProps {
