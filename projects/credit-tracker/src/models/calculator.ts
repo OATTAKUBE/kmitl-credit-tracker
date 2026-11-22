@@ -108,10 +108,14 @@ export function auditGraduation(
 
   const categories = {} as Record<CategoryId, CategoryProgress>;
   for (const id of categoryKeys) {
+    const req = CURRICULUM_REQUIREMENTS[id];
     categories[id] = {
       id,
-      nameTH: CURRICULUM_REQUIREMENTS[id].nameTH,
-      requiredCredits: CURRICULUM_REQUIREMENTS[id].requiredCredits,
+      nameTH: req.nameTH,
+      shortNameTH: req.shortNameTH,
+      groupTH: req.groupTH,
+      nameEN: req.nameEN,
+      requiredCredits: req.requiredCredits,
       earnedCredits: 0,
       inProgressCredits: 0,
       courses: [],

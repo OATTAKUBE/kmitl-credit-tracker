@@ -37,6 +37,9 @@ export interface CurriculumCourse {
 export interface CategoryProgress {
   id: CategoryId;
   nameTH: string;
+  shortNameTH?: string;
+  groupTH?: string;
+  nameEN?: string;
   requiredCredits: number;
   earnedCredits: number;
   inProgressCredits: number;

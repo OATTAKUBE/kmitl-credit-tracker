@@ -91,29 +91,28 @@ export const App: React.FC = () => {
               missingCount={auditResult.missingMandatory.length}
             />
 
-            {/* Two-Column Responsive Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Left Column / Sidebar */}
-              <div className="lg:col-span-5 space-y-6">
+            {/* Student Profile & Plan Track Selection (Side-by-side) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              <div className="lg:col-span-7 flex flex-col">
                 <StudentSummaryView
                   studentInfo={auditResult.studentInfo}
                   totalEarned={auditResult.totalEarned}
                   totalRequired={auditResult.totalRequired}
                   cumulativeGPA={auditResult.cumulativeGPA}
                 />
+              </div>
+              <div className="lg:col-span-5 flex flex-col">
                 <PathSelectorView
                   currentPath={currentPath}
                   onSelectPath={handlePathChange}
                 />
               </div>
-
-              {/* Right Column / Category Grid */}
-              <div className="lg:col-span-7">
-                <CategoryGridView categories={auditResult.categories} />
-              </div>
             </div>
 
-            {/* Bottom Section: Missing and In-Progress Courses */}
+            {/* Full-width Category Progress Grid (8 Categories) */}
+            <CategoryGridView categories={auditResult.categories} />
+
+            {/* Missing and In-Progress Courses */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <MissingCoursesView missing={auditResult.missingMandatory} />
               <InProgressView courses={auditResult.inProgressCourses} />

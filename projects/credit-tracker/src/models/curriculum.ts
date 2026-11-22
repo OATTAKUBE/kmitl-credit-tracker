@@ -10,38 +10,68 @@ import type {
  */
 export const CURRICULUM_REQUIREMENTS: Record<
   CategoryId,
-  { nameTH: string; requiredCredits: number }
+  {
+    nameTH: string;
+    shortNameTH: string;
+    groupTH: string;
+    nameEN: string;
+    requiredCredits: number;
+  }
 > = {
   ge_foundation: {
+    groupTH: 'หมวดวิชาศึกษาทั่วไป',
     nameTH: 'หมวดวิชาศึกษาทั่วไป - กลุ่มวิชาพื้นฐาน',
+    shortNameTH: 'กลุ่มวิชาพื้นฐาน',
+    nameEN: 'GE Foundation',
     requiredCredits: 6,
   },
   ge_lang: {
+    groupTH: 'หมวดวิชาศึกษาทั่วไป',
     nameTH: 'หมวดวิชาศึกษาทั่วไป - กลุ่มวิชาด้านภาษาและการสื่อสาร',
+    shortNameTH: 'กลุ่มภาษาและการสื่อสาร',
+    nameEN: 'GE Language & Communication',
     requiredCredits: 9,
   },
   ge_elective: {
+    groupTH: 'หมวดวิชาศึกษาทั่วไป',
     nameTH: 'หมวดวิชาศึกษาทั่วไป - กลุ่มวิชาเลือก',
+    shortNameTH: 'กลุ่มวิชาเลือกทั่วไป',
+    nameEN: 'GE Electives',
     requiredCredits: 15,
   },
   math_mandatory: {
+    groupTH: 'หมวดวิชาเฉพาะ',
     nameTH: 'หมวดวิชาเฉพาะ - วิชาบังคับทางคณิตศาสตร์และสถิติ',
+    shortNameTH: 'วิชาบังคับคณิตศาสตร์และสถิติ',
+    nameEN: 'Math & Statistics Mandatory',
     requiredCredits: 18,
   },
   cs_mandatory: {
+    groupTH: 'หมวดวิชาเฉพาะ',
     nameTH: 'หมวดวิชาเฉพาะ - วิชาบังคับทางวิทยาการคอมพิวเตอร์',
+    shortNameTH: 'วิชาบังคับวิทยาการคอมพิวเตอร์',
+    nameEN: 'Computer Science Mandatory',
     requiredCredits: 57,
   },
   cs_elective: {
+    groupTH: 'หมวดวิชาเฉพาะ',
     nameTH: 'หมวดวิชาเฉพาะ - วิชาเลือก',
+    shortNameTH: 'วิชาเลือกวิทยาการคอมพิวเตอร์',
+    nameEN: 'CS Electives',
     requiredCredits: 18,
   },
   alternative_study: {
+    groupTH: 'หมวดวิชาเฉพาะ',
     nameTH: 'หมวดวิชาเฉพาะ - การศึกษาทางเลือก',
+    shortNameTH: 'การศึกษาทางเลือก',
+    nameEN: 'Alternative Study',
     requiredCredits: 6,
   },
   free_elective: {
+    groupTH: 'หมวดวิชาเลือกเสรี',
     nameTH: 'หมวดวิชาเลือกเสรี',
+    shortNameTH: 'วิชาเลือกเสรี',
+    nameEN: 'Free Electives',
     requiredCredits: 6,
   },
 };
