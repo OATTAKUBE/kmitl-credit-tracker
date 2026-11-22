@@ -5,6 +5,8 @@ job_full.txt
 job_pages5to16.txt
 *.log
 .superpowers/
-stat.pdf
+*.pdf
+transcript_data.json
+
 
 
