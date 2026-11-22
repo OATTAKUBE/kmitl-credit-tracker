@@ -55,69 +55,70 @@ export const PathSelectorView: React.FC<PathSelectorViewProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl backdrop-blur-sm space-y-4">
-      <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-          <Compass className="w-5 h-5" />
+    <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl backdrop-blur-md flex flex-col justify-between h-full">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <Compass className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-slate-100">
+              แผนการศึกษาทางเลือก (Alternative Study Track)
+            </h3>
+            <p className="text-xs text-slate-400">
+              หมวดวิชาเฉพาะ - การศึกษาทางเลือก (6 หน่วยกิต) กรุณาเลือกแผนการศึกษา
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-base font-semibold text-slate-100">
-            แผนการศึกษาทางเลือก (Alternative Study Track)
-          </h3>
-          <p className="text-xs text-slate-400">
-            หมวดวิชาเฉพาะ - การศึกษาทางเลือก (6 หน่วยกิต) กรุณาเลือกแผนการศึกษาที่ต้องการตรวจสอบ
-          </p>
-        </div>
-      </div>
 
-      <div
-        role="radiogroup"
-        aria-label="เลือกแผนการศึกษาทางเลือก"
-        className={`grid grid-cols-1 ${
-          availablePaths.length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'
-        } gap-4 pt-1`}
-      >
-        {availablePaths.map(([pathKey, pathOption]) => {
-          const isSelected = currentPath === pathKey;
-          return (
-            <button
-              key={pathKey}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              onClick={() => onSelectPath(pathKey)}
-              className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
-                isSelected
-                  ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 text-slate-100'
-                  : 'bg-slate-950/50 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60'
-              }`}
-            >
-              <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+        <div role="radiogroup" aria-label="เลือกแผนการศึกษาทางเลือก" className="flex flex-col gap-2.5">
+          {availablePaths.map(([pathKey, pathOption]) => {
+            const isSelected = currentPath === pathKey;
+            return (
+              <button
+                key={pathKey}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => onSelectPath(pathKey)}
+                className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
                   isSelected
-                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                    : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
+                    ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 text-slate-100'
+                    : 'bg-slate-950/50 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60'
                 }`}
               >
-                {getPathIcon(pathKey)}
-              </div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      isSelected
+                        ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
+                        : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
+                    }`}
+                  >
+                    {getPathIcon(pathKey)}
+                  </div>
 
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm text-slate-200">
-                    {pathOption.nameTH}
-                  </span>
-                  {isSelected && (
-                    <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <div className="min-w-0 space-y-0.5">
+                    <span className="font-semibold text-sm text-slate-200 block truncate">
+                      {pathOption.nameTH}
+                    </span>
+                    <p className="text-xs text-slate-400 leading-normal line-clamp-2">
+                      {getPathDescription(pathKey)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 pl-1">
+                  {isSelected ? (
+                    <CheckCircle2 className="w-4 h-4 text-indigo-400" />
+                  ) : (
+                    <div className="w-4 h-4 rounded-full border border-slate-700" />
                   )}
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  {getPathDescription(pathKey)}
-                </p>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

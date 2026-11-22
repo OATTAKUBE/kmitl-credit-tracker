@@ -7,6 +7,7 @@ export interface StudentSummaryViewProps {
   totalEarned: number;
   totalRequired: number;
   cumulativeGPA: number;
+  curriculumName?: string;
 }
 
 export const StudentSummaryView: React.FC<StudentSummaryViewProps> = ({
@@ -14,6 +15,7 @@ export const StudentSummaryView: React.FC<StudentSummaryViewProps> = ({
   totalEarned,
   totalRequired,
   cumulativeGPA,
+  curriculumName,
 }) => {
   const percentage = Math.min(
     100,
@@ -35,7 +37,7 @@ export const StudentSummaryView: React.FC<StudentSummaryViewProps> = ({
         <div className="space-y-4 flex-1 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
             <GraduationCap className="w-3.5 h-3.5" />
-            <span>หลักสูตรวิทยาศาสตรบัณฑิต วท.บ. (วิทยาการคอมพิวเตอร์) ปรับปรุง 2564</span>
+            <span>{curriculumName || 'หลักสูตรวิทยาศาสตรบัณฑิต วท.บ.'}</span>
           </div>
 
           <div>

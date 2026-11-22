@@ -6,6 +6,7 @@ export interface GraduationBannerViewProps {
   totalEarned: number;
   totalRequired: number;
   missingCount: number;
+  curriculumName?: string;
 }
 
 export const GraduationBannerView: React.FC<GraduationBannerViewProps> = ({
@@ -13,6 +14,7 @@ export const GraduationBannerView: React.FC<GraduationBannerViewProps> = ({
   totalEarned,
   totalRequired,
   missingCount,
+  curriculumName,
 }) => {
   const remainingCredits = Math.max(0, totalRequired - totalEarned);
 
@@ -34,7 +36,7 @@ export const GraduationBannerView: React.FC<GraduationBannerViewProps> = ({
             </h2>
             <p className="text-sm text-emerald-200/80 leading-relaxed max-w-2xl">
               คุณได้สะสมหน่วยกิตครบถ้วนตามโครงสร้างหลักสูตร ({totalEarned} / {totalRequired} หน่วยกิต)
-              และผ่านรายวิชาบังคับครบทุกรายวิชาของหลักสูตรวิทยาศาสตรบัณฑิต วท.บ. วิทยาการคอมพิวเตอร์ (ปรับปรุง 2564)
+              และผ่านรายวิชาบังคับครบทุกรายวิชาของ{curriculumName ? `หลักสูตร ${curriculumName}` : 'หลักสูตร'}
             </p>
           </div>
         </div>
@@ -60,7 +62,7 @@ export const GraduationBannerView: React.FC<GraduationBannerViewProps> = ({
           </h2>
 
           <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">
-            คุณยังต้องสะสมหน่วยกิตหรือลงทะเบียนเรียนวิชาบังคับให้ครบถ้วนตามโครงสร้างหลักสูตร 135 หน่วยกิต
+            คุณยังต้องสะสมหน่วยกิตหรือลงทะเบียนเรียนวิชาบังคับให้ครบถ้วนตามโครงสร้างหลักสูตร {totalRequired} หน่วยกิต
           </p>
 
           <div className="flex flex-wrap gap-3 pt-1 justify-center sm:justify-start">

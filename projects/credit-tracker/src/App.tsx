@@ -120,6 +120,7 @@ export const App: React.FC = () => {
               totalEarned={auditResult.totalEarned}
               totalRequired={auditResult.totalRequired}
               missingCount={auditResult.missingMandatory.length}
+              curriculumName={activeCurriculum.nameTH}
             />
 
             {/* Student Profile & Plan Track Selection (Side-by-side) */}
@@ -130,6 +131,7 @@ export const App: React.FC = () => {
                   totalEarned={auditResult.totalEarned}
                   totalRequired={auditResult.totalRequired}
                   cumulativeGPA={auditResult.cumulativeGPA}
+                  curriculumName={activeCurriculum.nameTH}
                 />
               </div>
               <div className="lg:col-span-5 flex flex-col">
