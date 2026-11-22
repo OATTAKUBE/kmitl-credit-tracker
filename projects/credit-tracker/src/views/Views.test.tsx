@@ -9,7 +9,7 @@ import {
   InProgressView,
   GraduationBannerView,
 } from './index';
-import { CategoryId, CategoryProgress, CurriculumCourse, CourseEntry, StudentInfo } from '../models/types';
+import { CategoryProgress, CurriculumCourse, CourseEntry, StudentInfo } from '../models/types';
 
 describe('UploadView Component', () => {
   it('should render drop zone and demo button', () => {
@@ -189,7 +189,7 @@ describe('GraduationBannerView Component', () => {
 });
 
 describe('CategoryGridView Component', () => {
-  const mockCategories: Record<CategoryId, CategoryProgress> = {
+  const mockCategories: Record<string, CategoryProgress> = {
     ge_foundation: { id: 'ge_foundation', nameTH: 'หมวดวิชาศึกษาทั่วไป - กลุ่มวิชาพื้นฐาน', requiredCredits: 6, earnedCredits: 6, inProgressCredits: 0, courses: [], isMet: true },
     ge_lang: { id: 'ge_lang', nameTH: 'หมวดวิชาศึกษาทั่วไป - กลุ่มวิชาด้านภาษาและการสื่อสาร', requiredCredits: 9, earnedCredits: 9, inProgressCredits: 0, courses: [], isMet: true },
     ge_elective: { id: 'ge_elective', nameTH: 'หมวดวิชาศึกษาทั่วไป - กลุ่มวิชาเลือก', requiredCredits: 15, earnedCredits: 15, inProgressCredits: 0, courses: [], isMet: true },

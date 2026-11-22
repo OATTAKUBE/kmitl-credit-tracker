@@ -4,15 +4,11 @@ import type {
   CategoryProgress,
   CourseEntry,
   CurriculumCourse,
+  CurriculumId,
   StudentInfo,
   AlternativePath,
 } from './types';
-import {
-  CURRICULUM_REQUIREMENTS,
-  MANDATORY_COURSES,
-  ALTERNATIVE_PATHS,
-  CODE_ALIASES,
-} from './curriculum';
+import { getCurriculum, DEFAULT_CURRICULUM_ID } from './curriculums/registry';
 
 /**
  * Letter grade to quality points conversion for KMITL GPA calculation.
@@ -30,92 +26,80 @@ const GRADE_POINTS: Record<string, number> = {
 };
 
 /**
- * Returns canonical course code by resolving legacy or alternate codes.
- */
-function getCanonicalCode(code: string): string {
-  return CODE_ALIASES[code] ?? code;
-}
-
-/**
  * Pure domain calculation engine for credit matching, category progress auditing,
- * and graduation eligibility verification against KMITL CS 2564 curriculum.
+ * and graduation eligibility verification against KMITL curricula.
  *
  * @param studentInfo Metadata of the student
  * @param courses Parsed course entries from transcript
- * @param selectedPath Selected alternative study path ('special_problem' | 'coop')
+ * @param selectedPath Selected alternative study path ('special_problem' | 'coop' | 'overseas_training')
  * @param summaryGPA Optional transcript summary GPA; calculated from letter grades if omitted
+ * @param curriculumId Identifier of curriculum to audit against (defaults to 'cs_2564')
  * @returns AuditResult
  */
 export function auditGraduation(
   studentInfo: StudentInfo,
   courses: CourseEntry[],
-  selectedPath: AlternativePath,
-  summaryGPA?: number
+  selectedPath: AlternativePath = 'special_problem',
+  summaryGPA?: number,
+  curriculumId: CurriculumId = DEFAULT_CURRICULUM_ID
 ): AuditResult {
-  // Pre-index mandatory and path-specific courses
-  const mathMandatoryCodes = new Set(
-    MANDATORY_COURSES.filter((c) => c.category === 'math_mandatory').map((c) => c.code)
-  );
-  const csMandatoryCodes = new Set(
-    MANDATORY_COURSES.filter((c) => c.category === 'cs_mandatory').map((c) => c.code)
-  );
+  const curriculum = getCurriculum(curriculumId);
+  const categoryKeys = curriculum.orderedCategoryIds;
+
+  // Resolve alternative path option (fallback to first available if selectedPath is invalid for this curriculum)
+  const activePathOption =
+    curriculum.alternativePaths[selectedPath] ??
+    Object.values(curriculum.alternativePaths).find((p) => p !== undefined);
+
   const activeAlternativeCodes = new Set(
-    ALTERNATIVE_PATHS[selectedPath].courses.map((c) => c.code)
+    activePathOption ? activePathOption.courses.map((c) => c.code) : []
   );
-  const geFoundationCodes = new Set(['90642999', '90641002']);
 
   /**
-   * Identifies the primary curriculum category for a course code.
+   * Returns canonical course code by resolving legacy or alternate codes.
    */
-  function getPrimaryCategory(code: string): CategoryId {
-    const canonical = getCanonicalCode(code);
+  function getCanonicalCode(code: string): string {
+    return curriculum.codeAliases[code] ?? code;
+  }
 
-    if (mathMandatoryCodes.has(canonical)) {
-      return 'math_mandatory';
-    }
-    if (csMandatoryCodes.has(canonical)) {
-      return 'cs_mandatory';
-    }
+  /**
+   * Categorizes a course using curriculum classification rules.
+   */
+  function categorizeCourse(code: string): CategoryId {
+    const canonical = getCanonicalCode(code);
     if (activeAlternativeCodes.has(canonical)) {
       return 'alternative_study';
     }
-    if (geFoundationCodes.has(canonical)) {
-      return 'ge_foundation';
-    }
-    if (/^90644\d{3}$/.test(canonical)) {
-      return 'ge_lang';
-    }
-    if (/^9064\d{4}$/.test(canonical)) {
-      return 'ge_elective';
-    }
-    if (/^05506\d{3}$/.test(canonical)) {
-      return 'cs_elective';
-    }
-    return 'free_elective';
+    return curriculum.classifyCourse(canonical);
   }
 
   // Initialize category progress buckets
-  const categoryKeys: CategoryId[] = [
-    'ge_foundation',
-    'ge_lang',
-    'ge_elective',
-    'math_mandatory',
-    'cs_mandatory',
-    'cs_elective',
-    'alternative_study',
-    'free_elective',
-  ];
-
   const categories = {} as Record<CategoryId, CategoryProgress>;
   for (const id of categoryKeys) {
-    const req = CURRICULUM_REQUIREMENTS[id];
+    const req = curriculum.requirements[id];
     categories[id] = {
       id,
-      nameTH: req.nameTH,
-      shortNameTH: req.shortNameTH,
-      groupTH: req.groupTH,
-      nameEN: req.nameEN,
-      requiredCredits: req.requiredCredits,
+      nameTH: req?.nameTH || id,
+      shortNameTH: req?.shortNameTH,
+      groupTH: req?.groupTH,
+      nameEN: req?.nameEN,
+      requiredCredits: req?.requiredCredits || 0,
+      earnedCredits: 0,
+      inProgressCredits: 0,
+      courses: [],
+      isMet: false,
+    };
+  }
+
+  // Ensure free_elective bucket exists even if not in orderedCategoryIds
+  if (!categories.free_elective) {
+    categories.free_elective = {
+      id: 'free_elective',
+      nameTH: 'หมวดวิชาเลือกเสรี',
+      shortNameTH: 'วิชาเลือกเสรี',
+      groupTH: 'หมวดวิชาเลือกเสรี',
+      nameEN: 'Free Electives',
+      requiredCredits: 6,
       earnedCredits: 0,
       inProgressCredits: 0,
       courses: [],
@@ -147,22 +131,30 @@ export function auditGraduation(
   const overflowToFree: CourseEntry[] = [];
 
   for (const course of completedCourses) {
-    const primaryCat = getPrimaryCategory(course.code);
+    const primaryCat = categorizeCourse(course.code);
 
     switch (primaryCat) {
       case 'math_mandatory':
       case 'cs_mandatory':
+      case 'stat_core':
+      case 'stat_mandatory':
       case 'alternative_study':
       case 'ge_foundation': {
-        categories[primaryCat].courses.push(course);
-        categories[primaryCat].earnedCredits += course.credits;
+        if (categories[primaryCat]) {
+          categories[primaryCat].courses.push(course);
+          categories[primaryCat].earnedCredits += course.credits;
+        } else {
+          overflowToFree.push(course);
+        }
         break;
       }
       case 'ge_lang':
+      case 'ge_science':
       case 'ge_elective':
-      case 'cs_elective': {
+      case 'cs_elective':
+      case 'stat_elective': {
         const catProgress = categories[primaryCat];
-        if (catProgress.earnedCredits + course.credits <= catProgress.requiredCredits) {
+        if (catProgress && catProgress.earnedCredits + course.credits <= catProgress.requiredCredits) {
           catProgress.courses.push(course);
           catProgress.earnedCredits += course.credits;
         } else {
@@ -186,22 +178,29 @@ export function auditGraduation(
 
   // 3. Allocate in-progress courses
   for (const course of inProgressCourses) {
-    const primaryCat = getPrimaryCategory(course.code);
-    categories[primaryCat].courses.push(course);
-    categories[primaryCat].inProgressCredits += course.credits;
+    const primaryCat = categorizeCourse(course.code);
+    if (categories[primaryCat]) {
+      categories[primaryCat].courses.push(course);
+      categories[primaryCat].inProgressCredits += course.credits;
+    }
   }
 
   // 4. Update isMet flags for each category
   for (const id of categoryKeys) {
-    categories[id].isMet = categories[id].earnedCredits >= categories[id].requiredCredits;
+    if (categories[id]) {
+      categories[id].isMet = categories[id].earnedCredits >= categories[id].requiredCredits;
+    }
   }
 
   // 5. Determine missing mandatory courses
   const missingMandatory: CurriculumCourse[] = [];
-  const mandatoryCatalog: CurriculumCourse[] = [
-    ...MANDATORY_COURSES,
-    ...ALTERNATIVE_PATHS[selectedPath].courses.map((c) => ({ ...c, isMandatory: true })),
-  ];
+  const mandatoryCatalog: CurriculumCourse[] = [...curriculum.mandatoryCourses];
+
+  if (activePathOption) {
+    mandatoryCatalog.push(
+      ...activePathOption.courses.map((c) => ({ ...c, isMandatory: true }))
+    );
+  }
 
   for (const mc of mandatoryCatalog) {
     const canonical = getCanonicalCode(mc.code);
@@ -238,17 +237,20 @@ export function auditGraduation(
   }
 
   // 7. Determine graduation eligibility
-  const allCategoriesMet = categoryKeys.every((id) => categories[id].isMet);
+  const allCategoriesMet = categoryKeys.every((id) => categories[id]?.isMet ?? false);
+  const totalRequired = curriculum.metadata.totalRequired;
   const isEligibleToGraduate =
-    totalEarned >= 135 && missingMandatory.length === 0 && allCategoriesMet;
+    totalEarned >= totalRequired && missingMandatory.length === 0 && allCategoriesMet;
 
   return {
     studentInfo,
+    curriculumId,
     totalEarned,
-    totalRequired: 135,
+    totalRequired,
     cumulativeGPA,
     isEligibleToGraduate,
     categories,
+    orderedCategoryIds: categoryKeys,
     missingMandatory,
     inProgressCourses,
     currentPath: selectedPath,

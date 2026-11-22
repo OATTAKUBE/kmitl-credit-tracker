@@ -4,10 +4,11 @@ import type { CategoryId, CategoryProgress } from '../models/types';
 import { CategoryCardView } from './CategoryCardView';
 
 export interface CategoryGridViewProps {
-  categories: Record<CategoryId, CategoryProgress>;
+  categories: Record<string, CategoryProgress>;
+  orderedCategoryIds?: CategoryId[];
 }
 
-const ORDERED_CATEGORY_IDS: CategoryId[] = [
+const DEFAULT_ORDERED_CATEGORY_IDS: CategoryId[] = [
   'ge_foundation',
   'ge_lang',
   'ge_elective',
@@ -18,7 +19,10 @@ const ORDERED_CATEGORY_IDS: CategoryId[] = [
   'free_elective',
 ];
 
-export const CategoryGridView: React.FC<CategoryGridViewProps> = ({ categories }) => {
+export const CategoryGridView: React.FC<CategoryGridViewProps> = ({
+  categories,
+  orderedCategoryIds = DEFAULT_ORDERED_CATEGORY_IDS,
+}) => {
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2.5">
@@ -30,13 +34,13 @@ export const CategoryGridView: React.FC<CategoryGridViewProps> = ({ categories }
             ความคืบหน้ารายหมวดวิชา (Curriculum Categories)
           </h2>
           <p className="text-xs text-slate-400">
-            ตรวจสอบสัดส่วนหน่วยกิตที่ผ่านแล้วและกำลังศึกษาตามเกณฑ์ 8 หมวดวิชา
+            ตรวจสอบสัดส่วนหน่วยกิตที่ผ่านแล้วและกำลังศึกษาตามเกณฑ์หมวดวิชาของหลักสูตร
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {ORDERED_CATEGORY_IDS.map((catId) => {
+        {orderedCategoryIds.map((catId) => {
           const category = categories[catId];
           if (!category) return null;
           return <CategoryCardView key={catId} category={category} />;

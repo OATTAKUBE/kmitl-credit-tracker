@@ -243,8 +243,8 @@ describe('E2E Real Transcript Verification Suite', () => {
       expect(auditB.missingMandatory.length).toBe(7);
       expect(auditA.currentPath).toBe('special_problem');
       expect(auditB.currentPath).toBe('coop');
-      expect(ALTERNATIVE_PATHS[auditA.currentPath].nameTH).toContain('โครงงานปัญหาพิเศษ');
-      expect(ALTERNATIVE_PATHS[auditB.currentPath].nameTH).toContain('สหกิจศึกษา');
+      expect(ALTERNATIVE_PATHS[auditA.currentPath as 'special_problem' | 'coop']?.nameTH).toContain('ปัญหาพิเศษ');
+      expect(ALTERNATIVE_PATHS[auditB.currentPath as 'special_problem' | 'coop']?.nameTH).toContain('สหกิจศึกษา');
     });
   });
 

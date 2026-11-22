@@ -4,12 +4,14 @@ import type {
   AlternativePath,
   StudentInfo,
   CourseEntry,
+  CurriculumId,
 } from '../models/types';
 import { auditGraduation } from '../models/calculator';
 import { parseTranscriptText } from '../models/parser';
 import { saveAuditState, loadAuditState, clearAuditState } from '../models/storage';
 import { extractTextFromPdf } from './pdfExtractor';
 import { SAMPLE_TRANSCRIPT_TEXT } from '../models/sampleTranscript';
+import { detectCurriculum, DEFAULT_CURRICULUM_ID } from '../models/curriculums/registry';
 
 interface RawStudentData {
   studentInfo: StudentInfo;
@@ -22,23 +24,26 @@ export interface CreditTrackerController {
   isProcessing: boolean;
   error: string | null;
   currentPath: AlternativePath;
+  currentCurriculum: CurriculumId;
   hasLoadedData: boolean;
   handleFileUpload: (file: File) => Promise<void>;
   handleDemoLoad: () => void;
   handlePathChange: (path: AlternativePath) => void;
+  handleCurriculumChange: (curriculumId: CurriculumId) => void;
   handleReset: () => void;
 }
 
 /**
- * Custom React Hook acting as the MVC Controller for the KMITL CS Credit Tracker.
- * Orchestrates domain models (parser, calculator, storage), coordinates side effects,
- * manages application state, and provides handlers to views.
+ * Custom React Hook acting as the MVC Controller for the KMITL Credit Tracker.
+ * Orchestrates domain models (parser, calculator, storage, multi-curriculum registry),
+ * coordinates side effects, manages application state, and provides handlers to views.
  */
 export function useCreditTrackerController(): CreditTrackerController {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState<AlternativePath>('special_problem');
+  const [currentCurriculum, setCurrentCurriculum] = useState<CurriculumId>(DEFAULT_CURRICULUM_ID);
   const [rawStudentData, setRawStudentData] = useState<RawStudentData | null>(null);
 
   // Restore cached state on initial mount
@@ -46,7 +51,9 @@ export function useCreditTrackerController(): CreditTrackerController {
     try {
       const cached = loadAuditState();
       if (cached) {
+        const curriculumId = cached.curriculumId || DEFAULT_CURRICULUM_ID;
         setCurrentPath(cached.path);
+        setCurrentCurriculum(curriculumId);
         setRawStudentData({
           studentInfo: cached.studentInfo,
           courses: cached.courses,
@@ -56,7 +63,8 @@ export function useCreditTrackerController(): CreditTrackerController {
           cached.studentInfo,
           cached.courses,
           cached.path,
-          cached.cumulativeGPA
+          cached.cumulativeGPA,
+          curriculumId
         );
         setAuditResult(result);
       }
@@ -87,9 +95,12 @@ export function useCreditTrackerController(): CreditTrackerController {
 
       const parsed = parseTranscriptText(text);
 
-      // Auto-detect path: if transcript contains Coop course (05506117), select coop
+      // Auto-detect curriculum based on course prefixes (STAT: 05406xxx vs CS: 05506xxx)
+      const detectedCurriculum = detectCurriculum(parsed.allCourses, currentCurriculum);
+
+      // Auto-detect path: if transcript contains Coop course (05506117 or 05406168), select coop
       const autoPath: AlternativePath = parsed.allCourses.some(
-        (c) => c.code === '05506117'
+        (c) => c.code === '05506117' || c.code === '05406168'
       )
         ? 'coop'
         : 'special_problem';
@@ -98,11 +109,13 @@ export function useCreditTrackerController(): CreditTrackerController {
         parsed.studentInfo,
         parsed.allCourses,
         autoPath,
-        parsed.summary.cumulativeGPA
+        parsed.summary.cumulativeGPA,
+        detectedCurriculum
       );
 
       setAuditResult(result);
       setCurrentPath(autoPath);
+      setCurrentCurriculum(detectedCurriculum);
       setRawStudentData({
         studentInfo: parsed.studentInfo,
         courses: parsed.allCourses,
@@ -113,6 +126,7 @@ export function useCreditTrackerController(): CreditTrackerController {
         studentInfo: parsed.studentInfo,
         courses: parsed.allCourses,
         path: autoPath,
+        curriculumId: detectedCurriculum,
         cumulativeGPA: parsed.summary.cumulativeGPA,
       });
     } catch (err) {
@@ -121,7 +135,7 @@ export function useCreditTrackerController(): CreditTrackerController {
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [currentCurriculum]);
 
   const handleDemoLoad = useCallback(() => {
     setError(null);
@@ -130,16 +144,19 @@ export function useCreditTrackerController(): CreditTrackerController {
     try {
       const parsed = parseTranscriptText(SAMPLE_TRANSCRIPT_TEXT);
       const path: AlternativePath = 'special_problem';
+      const curriculumId: CurriculumId = 'cs_2564';
 
       const result = auditGraduation(
         parsed.studentInfo,
         parsed.allCourses,
         path,
-        parsed.summary.cumulativeGPA
+        parsed.summary.cumulativeGPA,
+        curriculumId
       );
 
       setAuditResult(result);
       setCurrentPath(path);
+      setCurrentCurriculum(curriculumId);
       setRawStudentData({
         studentInfo: parsed.studentInfo,
         courses: parsed.allCourses,
@@ -150,6 +167,7 @@ export function useCreditTrackerController(): CreditTrackerController {
         studentInfo: parsed.studentInfo,
         courses: parsed.allCourses,
         path,
+        curriculumId,
         cumulativeGPA: parsed.summary.cumulativeGPA,
       });
     } catch (err) {
@@ -166,18 +184,44 @@ export function useCreditTrackerController(): CreditTrackerController {
           rawStudentData.studentInfo,
           rawStudentData.courses,
           newPath,
-          rawStudentData.cumulativeGPA
+          rawStudentData.cumulativeGPA,
+          currentCurriculum
         );
         setAuditResult(result);
         saveAuditState({
           studentInfo: rawStudentData.studentInfo,
           courses: rawStudentData.courses,
           path: newPath,
+          curriculumId: currentCurriculum,
           cumulativeGPA: rawStudentData.cumulativeGPA,
         });
       }
     },
-    [rawStudentData]
+    [rawStudentData, currentCurriculum]
+  );
+
+  const handleCurriculumChange = useCallback(
+    (newCurriculum: CurriculumId) => {
+      setCurrentCurriculum(newCurriculum);
+      if (rawStudentData) {
+        const result = auditGraduation(
+          rawStudentData.studentInfo,
+          rawStudentData.courses,
+          currentPath,
+          rawStudentData.cumulativeGPA,
+          newCurriculum
+        );
+        setAuditResult(result);
+        saveAuditState({
+          studentInfo: rawStudentData.studentInfo,
+          courses: rawStudentData.courses,
+          path: currentPath,
+          curriculumId: newCurriculum,
+          cumulativeGPA: rawStudentData.cumulativeGPA,
+        });
+      }
+    },
+    [rawStudentData, currentPath]
   );
 
   const handleReset = useCallback(() => {
@@ -186,6 +230,7 @@ export function useCreditTrackerController(): CreditTrackerController {
     setError(null);
     setIsProcessing(false);
     setCurrentPath('special_problem');
+    setCurrentCurriculum(DEFAULT_CURRICULUM_ID);
     clearAuditState();
   }, []);
 
@@ -194,10 +239,12 @@ export function useCreditTrackerController(): CreditTrackerController {
     isProcessing,
     error,
     currentPath,
+    currentCurriculum,
     hasLoadedData: auditResult !== null,
     handleFileUpload,
     handleDemoLoad,
     handlePathChange,
+    handleCurriculumChange,
     handleReset,
   };
 }

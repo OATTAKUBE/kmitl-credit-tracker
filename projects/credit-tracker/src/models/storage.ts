@@ -1,4 +1,4 @@
-import type { StudentInfo, CourseEntry, AlternativePath } from './types';
+import type { StudentInfo, CourseEntry, AlternativePath, CurriculumId } from './types';
 
 export const STORAGE_KEY = 'kmitl_credit_tracker_v1';
 
@@ -6,6 +6,7 @@ export interface StoredAuditState {
   studentInfo: StudentInfo;
   courses: CourseEntry[];
   path: AlternativePath;
+  curriculumId?: CurriculumId;
   cumulativeGPA?: number;
 }
 
@@ -27,7 +28,7 @@ function getStorage(): Storage | null {
 }
 
 /**
- * Saves current audit state (student info, parsed courses, selected path, and GPA)
+ * Saves current audit state (student info, parsed courses, selected path, curriculumId, and GPA)
  * to browser LocalStorage.
  */
 export function saveAuditState(state: StoredAuditState): void {
@@ -64,7 +65,7 @@ export function loadAuditState(): StoredAuditState | null {
       typeof parsed.studentInfo !== 'object' ||
       !parsed.studentInfo.studentId ||
       !Array.isArray(parsed.courses) ||
-      (parsed.path !== 'special_problem' && parsed.path !== 'coop')
+      (parsed.path !== 'special_problem' && parsed.path !== 'coop' && parsed.path !== 'overseas_training')
     ) {
       return null;
     }

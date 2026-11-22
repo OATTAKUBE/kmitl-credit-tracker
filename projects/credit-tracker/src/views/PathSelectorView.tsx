@@ -1,16 +1,59 @@
 import React from 'react';
-import { Compass, CheckCircle2, FileCode, Briefcase } from 'lucide-react';
-import type { AlternativePath } from '../models/types';
+import { Compass, CheckCircle2, FileCode, Briefcase, Globe } from 'lucide-react';
+import type { AlternativePath, CurriculumId } from '../models/types';
+import { getCurriculum } from '../models/curriculums/registry';
 
 export interface PathSelectorViewProps {
   currentPath: AlternativePath;
   onSelectPath: (path: AlternativePath) => void;
+  curriculumId?: CurriculumId;
 }
 
 export const PathSelectorView: React.FC<PathSelectorViewProps> = ({
   currentPath,
   onSelectPath,
+  curriculumId = 'cs_2564',
 }) => {
+  const curriculum = getCurriculum(curriculumId);
+  const availablePaths = Object.entries(curriculum.alternativePaths).filter(
+    (entry): entry is [AlternativePath, NonNullable<(typeof entry)[1]>] => entry[1] !== undefined
+  );
+
+  const getPathIcon = (pathKey: AlternativePath) => {
+    switch (pathKey) {
+      case 'special_problem':
+        return <FileCode className="w-5 h-5" />;
+      case 'coop':
+        return <Briefcase className="w-5 h-5" />;
+      case 'overseas_training':
+        return <Globe className="w-5 h-5" />;
+      default:
+        return <Compass className="w-5 h-5" />;
+    }
+  };
+
+  const getPathDescription = (pathKey: AlternativePath) => {
+    if (curriculumId === 'stat_2564') {
+      switch (pathKey) {
+        case 'special_problem':
+          return 'โครงงานปัญหาพิเศษ (05406167 ปัญหาพิเศษ 2 รวม 6 หน่วยกิต)';
+        case 'coop':
+          return 'การปฏิบัติงานสหกิจศึกษาในสถานประกอบการเต็มเวลา 1 ภาคเรียน (05406168 สหกิจศึกษา รวม 6 หน่วยกิต)';
+        case 'overseas_training':
+          return 'การปฏิบัติการฝึกงานต่างประเทศ (05406169 & 05406170 รวม 6 หน่วยกิต)';
+      }
+    }
+    // Default to CS 2564 descriptions
+    switch (pathKey) {
+      case 'special_problem':
+        return 'โครงงานวิจัยและพัฒนาซอฟต์แวร์ 2 ภาคเรียน (05506098 ปัญหาพิเศษ 1 และ 05506099 ปัญหาพิเศษ 2 รวม 6 หน่วยกิต)';
+      case 'coop':
+        return 'การปฏิบัติงานในสถานประกอบการเต็มเวลา 1 ภาคการศึกษา (05506117 สหกิจศึกษา รวม 6 หน่วยกิต)';
+      default:
+        return 'การศึกษาทางเลือก 6 หน่วยกิต';
+    }
+  };
+
   return (
     <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl backdrop-blur-sm space-y-4">
       <div className="flex items-center gap-2.5">
@@ -27,80 +70,54 @@ export const PathSelectorView: React.FC<PathSelectorViewProps> = ({
         </div>
       </div>
 
-      <div role="radiogroup" aria-label="เลือกแผนการศึกษาทางเลือก" className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-        {/* Option 1: Special Problem */}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={currentPath === 'special_problem'}
-          onClick={() => onSelectPath('special_problem')}
-          className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
-            currentPath === 'special_problem'
-              ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 text-slate-100'
-              : 'bg-slate-950/50 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60'
-          }`}
-        >
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              currentPath === 'special_problem'
-                ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
-            }`}
-          >
-            <FileCode className="w-5 h-5" />
-          </div>
+      <div
+        role="radiogroup"
+        aria-label="เลือกแผนการศึกษาทางเลือก"
+        className={`grid grid-cols-1 ${
+          availablePaths.length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'
+        } gap-4 pt-1`}
+      >
+        {availablePaths.map(([pathKey, pathOption]) => {
+          const isSelected = currentPath === pathKey;
+          return (
+            <button
+              key={pathKey}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              onClick={() => onSelectPath(pathKey)}
+              className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
+                isSelected
+                  ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 text-slate-100'
+                  : 'bg-slate-950/50 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60'
+              }`}
+            >
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  isSelected
+                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
+                    : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
+                }`}
+              >
+                {getPathIcon(pathKey)}
+              </div>
 
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm text-slate-200">
-                ปัญหาพิเศษ 1 & 2 (Special Problem)
-              </span>
-              {currentPath === 'special_problem' && (
-                <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
-              )}
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              โครงงานวิจัยและพัฒนาซอฟต์แวร์ 2 ภาคเรียน (05506098 ปัญหาพิเศษ 1 และ 05506099 ปัญหาพิเศษ 2 รวม 6 หน่วยกิต)
-            </p>
-          </div>
-        </button>
-
-        {/* Option 2: Cooperative Education */}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={currentPath === 'coop'}
-          onClick={() => onSelectPath('coop')}
-          className={`relative text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none ${
-            currentPath === 'coop'
-              ? 'bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 text-slate-100'
-              : 'bg-slate-950/50 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60'
-          }`}
-        >
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              currentPath === 'coop'
-                ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
-            }`}
-          >
-            <Briefcase className="w-5 h-5" />
-          </div>
-
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm text-slate-200">
-                สหกิจศึกษา (Cooperative Education)
-              </span>
-              {currentPath === 'coop' && (
-                <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
-              )}
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              การปฏิบัติงานในสถานประกอบการเต็มเวลา 1 ภาคการศึกษา (05506117 สหกิจศึกษา รวม 6 หน่วยกิต)
-            </p>
-          </div>
-        </button>
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm text-slate-200">
+                    {pathOption.nameTH}
+                  </span>
+                  {isSelected && (
+                    <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {getPathDescription(pathKey)}
+                </p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
