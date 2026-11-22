@@ -33,7 +33,8 @@ export const App: React.FC = () => {
     handleReset,
   } = useCreditTrackerController();
 
-  const activeCurriculum = getCurriculum(currentCurriculum).metadata;
+  const curriculumDef = getCurriculum(currentCurriculum);
+  const activeCurriculum = curriculumDef.metadata;
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
@@ -50,7 +51,7 @@ export const App: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-100">
-                  KMITL CS Credit Tracker
+                  KMITL Credit Tracker
                 </h1>
                 <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   {activeCurriculum.badgeLabel}
@@ -149,7 +150,17 @@ export const App: React.FC = () => {
 
             {/* Missing and In-Progress Courses */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <MissingCoursesView missing={auditResult.missingMandatory} />
+              <MissingCoursesView
+                missing={auditResult.missingMandatory}
+                curriculumName={activeCurriculum.nameTH}
+                categoryLabels={Object.fromEntries(
+                  Object.entries(curriculumDef.requirements).map(([k, v]) => [
+                    k,
+                    v.shortNameTH || v.nameTH,
+                  ])
+                )}
+                inProgressCourseCodes={new Set(auditResult.inProgressCourses.map((c) => c.code))}
+              />
               <InProgressView courses={auditResult.inProgressCourses} />
             </div>
           </div>

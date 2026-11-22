@@ -11,7 +11,7 @@ describe('App Component', () => {
   it('renders upload view by default when no transcript is loaded and hides demo button', () => {
     render(<App />);
 
-    expect(screen.getByText('KMITL CS Credit Tracker')).toBeDefined();
+    expect(screen.getByText('KMITL Credit Tracker')).toBeDefined();
     expect(screen.getByText('ลากไฟล์ใบทรานสคริปต์ (PDF) มาวางที่นี่')).toBeDefined();
     expect(screen.queryByText(/ลองใช้ข้อมูลตัวอย่าง/)).toBeNull();
     expect(

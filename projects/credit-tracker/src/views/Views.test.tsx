@@ -113,10 +113,19 @@ describe('MissingCoursesView Component', () => {
     },
   ];
 
-  it('should render list of missing courses', () => {
-    render(<MissingCoursesView missing={mockMissing} />);
+  it('should render list of missing courses with dynamic category and in-progress badge', () => {
+    render(
+      <MissingCoursesView
+        missing={mockMissing}
+        curriculumName="วท.บ. วิทยาการคอมพิวเตอร์"
+        categoryLabels={{ math_mandatory: 'บังคับคณิตศาสตร์และสถิติ' }}
+        inProgressCourseCodes={new Set(['05506233'])}
+      />
+    );
     expect(screen.getByText('05506233')).toBeDefined();
     expect(screen.getByText('แคลคูลัส 2')).toBeDefined();
+    expect(screen.getByText('บังคับคณิตศาสตร์และสถิติ')).toBeDefined();
+    expect(screen.getByText('กำลังศึกษาเทอมนี้')).toBeDefined();
     expect(screen.getByText(/ขาดอีก 1 วิชา/)).toBeDefined();
   });
 

@@ -49,7 +49,7 @@ export const StudentSummaryView: React.FC<StudentSummaryViewProps> = ({
               <span className="font-mono text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
                 รหัสนักศึกษา: {studentInfo.studentId || '-'}
               </span>
-              <span>{studentInfo.program || 'สาขาวิชาวิทยาการคอมพิวเตอร์'}</span>
+              <span>{studentInfo.program || curriculumName || 'คณะวิทยาศาสตร์'}</span>
             </div>
           </div>
 
